@@ -1,0 +1,26 @@
+{
+    "name": "Hospital management system",
+    "summary": "Sistema de gestión hospitalaria",
+    "author": "Socger",
+    "license": "LGPL-3",
+    "version": "18.0.0.1.0",
+    "category": "Hospital",
+    "depends": [
+        "base",
+        "mail",
+        "product"
+    ],
+    "installable": True,
+    "application": True,
+    "auto_install": False,
+    "data": [
+        "security/ir.model.access.csv",
+        "data/sequence.xml",
+        "views/patient_views.xml",
+        "views/patient_readonly_views.xml",
+        "views/appointment_views.xml",
+        "views/appointment_line_views.xml",
+        "views/patient_tag_views.xml",
+        "views/menu.xml",
+    ],
+}

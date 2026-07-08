@@ -1,0 +1,51 @@
+# See https://github.com/Tecnativa/doodba#optodoocustomsrcreposyaml
+./odoo:
+  defaults:
+    # Shallow repositories ($DEPTH_DEFAULT=1) are faster & thinner
+    # You may need a bigger depth when merging PRs (use $DEPTH_MERGE
+    # for a sane value of 100 commits)
+    depth: $DEPTH_DEFAULT
+  remotes:
+    ocb: https://github.com/OCA/OCB.git
+    odoo: https://github.com/odoo/odoo.git
+    openupgrade: https://github.com/OCA/OpenUpgrade.git
+  target: ocb $ODOO_VERSION
+  merges:
+    - ocb $ODOO_VERSION
+    # Example of a merge of the PR with the number <PR>
+    # - oca refs/pull/<PR>/head
+
+# +----------------------------+
+# | Repositorio público Muk IT |
+# | No tiene rama para Odoo 18 |
+# +----------------------------+
+# ./muk/base:
+#   defaults:
+#     depth: $DEPTH_DEFAULT
+#   remotes:
+#     origin: https://github.com/muk-it/muk_base.git
+#   target: origin $ODOO_VERSION
+#   merges:
+#     - origin $ODOO_VERSION
+
+# ./muk/web:
+#   defaults:
+#     depth: $DEPTH_DEFAULT
+#   remotes:
+#     origin: https://github.com/muk-it/muk_web.git
+#   target: origin $ODOO_VERSION
+#   merges:
+#     - origin $ODOO_VERSION
+
+# +----------------------------+
+# | Repositorio privado        |
+# | Requiere configuración SSH |
+# +----------------------------+
+# ./libreinnova/plf:
+#   defaults:
+#     depth: $DEPTH_DEFAULT
+#   remotes:
+#     origin: git+ssh://git@bitbucket.org/galvintec/odoo_libreinnova_plf_addons.git
+#   target: origin $ODOO_VERSION
+#   merges:
+#     - origin $ODOO_VERSION

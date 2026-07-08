@@ -1,0 +1,18 @@
+oca/bank-payment:
+  - "*"
+oca/community-data-files:
+  - "*"
+oca/l10n-spain:
+  - "*"
+oca/web:
+  - "*"
+
+# muk/base:
+#   - "*"
+# muk/web:
+#   - "*"
+
+# libreinnova/crm:
+#   - "*"
+# libreinnova/custom:
+#   - "*"
