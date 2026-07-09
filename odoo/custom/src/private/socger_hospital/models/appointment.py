@@ -92,6 +92,12 @@ class HospitalAppointment(models.Model):
         # como es el caso de los campos calculados que queremos guardar su
         # valor en BD.
         store=True,
+        # con el groups de abajo, el campo date_of_birth solo será visible
+        # para los usuarios que pertenezcan al grupo
+        # socger_hospital.group_hospital_doctors.
+        # Los usuarios que no pertenezcan a ese grupo no podrán ver ni
+        # acceder a ese campo en la vista de formulario, lista o kanban.
+        groups="socger_hospital.group_hospital_doctors",
     )
 
     @api.model_create_multi
