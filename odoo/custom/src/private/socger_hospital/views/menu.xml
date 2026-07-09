@@ -1,49 +1,54 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <odoo>
-    <menuitem id="menu_hospital_root"
-              name="HMS"
-              web_icon="socger_hospital,static/description/icon_2.png"
-              sequence="38 "
+    <menuitem
+        id="menu_hospital_root"
+        name="HMS"
+        web_icon="socger_hospital,static/description/icon_2.png"
+        sequence="38"
     />
 
-    <menuitem id="menu_frontdesk"
-              name="Front desk"
-              parent="menu_hospital_root"
+    <menuitem id="menu_frontdesk" name="Front desk" parent="menu_hospital_root" />
+
+    <menuitem
+        id="menu_patients"
+        name="Patients"
+        parent="menu_frontdesk"
+        action="action_hospital_patient"
     />
 
-    <menuitem id="menu_patients"
-              name="Patients"
-              parent="menu_frontdesk"
-              action="action_hospital_patient"
+    <menuitem
+        id="menu_patients_readonly"
+        name="Patients - view"
+        parent="menu_frontdesk"
+        action="action_hospital_readonly_patient"
     />
 
-    <menuitem id="menu_patients_readonly"
-              name="Patients - view"
-              parent="menu_frontdesk"
-              action="action_hospital_readonly_patient"
+    <menuitem
+        id="menu_appointment"
+        name="Appointments"
+        parent="menu_frontdesk"
+        action="action_hospital_appointment"
     />
 
-    <menuitem id="menu_appointment"
-              name="Appointments"
-              parent="menu_frontdesk"
-              action="action_hospital_appointment"
+    <menuitem
+        id="menu_appointment_line"
+        name="Appointment lines"
+        parent="menu_frontdesk"
+        action="action_hospital_appointment_line"
     />
 
-    <menuitem id="menu_appointment_line"
-              name="Appointment lines"
-              parent="menu_frontdesk"
-              action="action_hospital_appointment_line"
+    <menuitem
+        id="menu_configuration"
+        name="Configuration"
+        sequence="100"
+        groups="socger_hospital.group_hospital_doctors"
+        parent="menu_hospital_root"
     />
 
-    <menuitem id="menu_configuration"
-              name="Configuration"
-              sequence="100"
-              parent="menu_hospital_root"
-    />
-
-    <menuitem id="menu_patient_tags"
-              name="Tags"
-              parent="menu_configuration"
-              action="action_patient_tag"
+    <menuitem
+        id="menu_patient_tags"
+        name="Tags"
+        parent="menu_configuration"
+        action="action_patient_tag"
     />
 </odoo>

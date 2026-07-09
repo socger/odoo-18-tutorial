@@ -1,4 +1,3 @@
-
 services:
   odoo:
     extends:
@@ -64,7 +63,7 @@ services:
     entrypoint: [sh, -c]
     command:
       - test -r /etc/mailhog/auth && export MH_AUTH_FILE=/etc/mailhog/auth; exec MailHog
-  
+
   odoo_net_setup:
     image: ghcr.io/tecnativa/docker-whitelist-gateway-service:edge
     network_mode: "service:odoo"
@@ -85,7 +84,14 @@ services:
       DOCKER_PROJECT: "${COMPOSE_PROJECT_NAME:-demo-tutorial-18}"
       DOCKER_PRIMARY_SERVICE: "odoo"
       ALLOWED_HOSTS: &proxy_allowed_hosts >-
-        accounts.google.com api.openrouteservice.org api.unsplash.com apis.google.com cdnjs.cloudflare.com download.geonames.org ec.europa.eu fonts.cdnfonts.com fonts.googleapis.com fonts.gstatic.com images.unsplash.com iap-services.odoo.com maps.googleapis.com media-api.odoo.com olg.api.odoo.com www.google.com www.googleapis.com www.gravatar.com undraw.co updates.maxmind.com www.ecb.europa.eu www.xe.com sis-t.redsys.es prewww1.aeat.es www2.agenciatributaria.gob.es www.openstreetmap.org nominatim.openstreetmap.org www.bizkaia.eus sii.araba.eus vies.api.odoo.com
+        accounts.google.com api.openrouteservice.org api.unsplash.com apis.google.com
+        cdnjs.cloudflare.com download.geonames.org ec.europa.eu fonts.cdnfonts.com
+        fonts.googleapis.com fonts.gstatic.com images.unsplash.com iap-services.odoo.com
+        maps.googleapis.com media-api.odoo.com olg.api.odoo.com www.google.com
+        www.googleapis.com www.gravatar.com undraw.co updates.maxmind.com
+        www.ecb.europa.eu www.xe.com sis-t.redsys.es prewww1.aeat.es
+        www2.agenciatributaria.gob.es www.openstreetmap.org nominatim.openstreetmap.org
+        www.bizkaia.eus sii.araba.eus vies.api.odoo.com
 
   proxy_general:
     image: ghcr.io/tecnativa/docker-whitelist-gateway-service:edge
@@ -102,7 +108,7 @@ services:
     environment:
       MODE_RUN: "gateway"
       ALLOWED_HOSTS: *proxy_allowed_hosts
-  
+
 networks:
   default:
     internal: ${DOODBA_NETWORK_INTERNAL-true}
@@ -121,4 +127,3 @@ volumes:
   filestore:
   db:
   smtpconf:
-

@@ -1,4 +1,3 @@
-
 services:
   odoo_proxy:
     image: ghcr.io/tecnativa/docker-whitelist:latest
@@ -128,7 +127,8 @@ services:
       DOCKER_PROJECT: "${COMPOSE_PROJECT_NAME:-tutorial}"
       DOCKER_PRIMARY_SERVICE: "odoo"
       ALLOWED_HOSTS: &proxy_allowed_hosts >-
-        cdnjs.cloudflare.com fonts.googleapis.com fonts.gstatic.com www.google.com www.googleapis.com www.gravatar.com
+        cdnjs.cloudflare.com fonts.googleapis.com fonts.gstatic.com www.google.com
+        www.googleapis.com www.gravatar.com
 
   proxy_general:
     image: ghcr.io/tecnativa/docker-whitelist-gateway-service:edge

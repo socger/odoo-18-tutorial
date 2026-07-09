@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <odoo>
     <record id="view_hospital_appointment_list" model="ir.ui.view">
         <field name="name">hospital.appointment.list</field>
@@ -7,7 +7,7 @@
             <list string="Appointments">
                 <field name="reference" />
                 <field name="patient_id" />
-                <field name="date_appointment" optional="show"/>
+                <field name="date_appointment" optional="show" />
             </list>
         </field>
     </record>
@@ -27,34 +27,39 @@
                     />
                 -->
                     <!-- buttons -->
-                    <button name="action_confirm"
-                            type="object"
-                            string="Confirm"
-                            invisible="state not in ('draft')"
-                            class="btn-primary"
+                    <button
+                        name="action_confirm"
+                        type="object"
+                        string="Confirm"
+                        invisible="state not in ('draft')"
+                        class="btn-primary"
                     />
-                    <button name="action_ongoing"
-                            type="object"
-                            string="Ongoing"
-                            invisible="state not in ('confirmed')"
-                            class="btn-primary"
+                    <button
+                        name="action_ongoing"
+                        type="object"
+                        string="Ongoing"
+                        invisible="state not in ('confirmed')"
+                        class="btn-primary"
                     />
-                    <button name="action_done"
-                            type="object"
-                            string="Done"
-                            invisible="state not in ('ongoing')"
-                            class="btn-primary"
+                    <button
+                        name="action_done"
+                        type="object"
+                        string="Done"
+                        invisible="state not in ('ongoing')"
+                        class="btn-primary"
                     />
-                    <button name="action_cancelled"
-                            type="object"
-                            string="Cancelled"
-                            invisible="state in ('done')"
+                    <button
+                        name="action_cancelled"
+                        type="object"
+                        string="Cancelled"
+                        invisible="state in ('done')"
                     />
 
                     <!-- statusbar -->
-                    <field name="state"
-                           widget="statusbar"
-                           statusbar_visible="draft,confirmed,ongoing,done"
+                    <field
+                        name="state"
+                        widget="statusbar"
+                        statusbar_visible="draft,confirmed,ongoing,done"
                     />
                 </header>
 
@@ -62,14 +67,15 @@
                     <sheet>
                         <group>
                             <group>
-                                <field name="reference" readonly="True"/>
+                                <field name="reference" readonly="True" />
                                 <field name="patient_id" />
-                                <field name="date_of_birth"/>
-                                <field name="date_appointment" optional="show"/>
+                                <field name="date_of_birth" />
+                                <field name="date_appointment" optional="show" />
                             </group>
                             <group>
                                 <field name="note" />
-                                <field name="total_qty"/>
+                                <field name="total_qty" />
+                                <field name="create_uid" />
                             </group>
                         </group>
 
@@ -94,16 +100,16 @@
                             </page>
                             <page name="other_info" string="Other info">
                                 <group>
-                                    <field name="aditional_note"/>
+                                    <field name="aditional_note" />
                                 </group>
                             </page>
                         </notebook>
                     </sheet>
 
-                    <br/>
+                    <br />
 
                     <sheet>
-                        <chatter reload_on_post="True"/>
+                        <chatter reload_on_post="True" />
                         <!-- <chatter/> -->
                     </sheet>
                 </sheet>

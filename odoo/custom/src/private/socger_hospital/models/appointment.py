@@ -8,27 +8,50 @@ class HospitalAppointment(models.Model):
     _rec_names_search = ["reference", "patient_id"]
     _rec_name = "reference"
 
-    # reference = fields.Char(string="Reference", required=True, copy=False, readonly=True, index=True, default=lambda self: ("New"))
-    reference = fields.Char(string="Reference", default="New")
+    # reference = fields.Char(
+    #     string="Reference", required=True, copy=False, readonly=True,
+    #     index=True, default=lambda self: ("New"),
+    # )
+    reference = fields.Char(default="New")
     patient_id = fields.Many2one(
         "hospital.patient",
         string="Patient",
-        # Con required=True, el campo patient_id es obligatorio y no se puede dejar vacío. Si se intenta guardar un registro de cita sin seleccionar un paciente, Odoo mostrará un mensaje de error indicando que el campo es obligatorio.
+        # Con required=True, el campo patient_id es obligatorio y no se puede
+        # dejar vacío. Si se intenta guardar un registro de cita sin
+        # seleccionar un paciente, Odoo mostrará un mensaje de error
+        # indicando que el campo es obligatorio.
         # required=True,
         #
-        # con required=False, el campo patient_id no es obligatorio y se puede dejar vacío. Si se intenta guardar un registro de cita sin seleccionar un paciente, Odoo permitirá guardar el registro sin mostrar ningún mensaje de error.
-        # Pero ocurre más, si intentamos borrar un paciente que tiene citas asociadas, Odoo mostrará un mensaje de aviso indicando que no se debe de borrar el paciente porque tiene citas asociadas. Pero lo permite a no ser que usemos ondelete="restrict", que es lo que se hace en este caso.
+        # con required=False, el campo patient_id no es obligatorio y se
+        # puede dejar vacío. Si se intenta guardar un registro de cita sin
+        # seleccionar un paciente, Odoo permitirá guardar el registro sin
+        # mostrar ningún mensaje de error.
+        # Pero ocurre más, si intentamos borrar un paciente que tiene citas
+        # asociadas, Odoo mostrará un mensaje de aviso indicando que no se
+        # debe de borrar el paciente porque tiene citas asociadas. Pero lo
+        # permite a no ser que usemos ondelete="restrict", que es lo que se
+        # hace en este caso.
         required=False,
-
-        # Con ondelete="restrict", si se intenta borrar un paciente que tiene citas asociadas, Odoo mostrará un mensaje de error indicando que no se puede borrar el paciente porque tiene citas asociadas. Esto evita que se borren pacientes que tienen citas asociadas y garantiza la integridad de los datos.
+        # Con ondelete="restrict", si se intenta borrar un paciente que tiene
+        # citas asociadas, Odoo mostrará un mensaje de error indicando que no
+        # se puede borrar el paciente porque tiene citas asociadas. Esto
+        # evita que se borren pacientes que tienen citas asociadas y
+        # garantiza la integridad de los datos.
         ondelete="restrict",
-        # Con ondelete="cascade", si se borra un paciente, todas las citas asociadas a ese paciente también se borrarán automáticamente. Esto puede ser útil en algunos casos, pero hay que tener cuidado porque se pueden perder datos importantes si se borra un paciente por error.
+        # Con ondelete="cascade", si se borra un paciente, todas las citas
+        # asociadas a ese paciente también se borrarán automáticamente. Esto
+        # puede ser útil en algunos casos, pero hay que tener cuidado porque
+        # se pueden perder datos importantes si se borra un paciente por
+        # error.
         # ondelete="cascade",
-        # Si se borra un paciente, el campo patient_id de las citas asociadas a ese paciente se establecerá en null (vacío). Esto puede ser útil en algunos casos, pero hay que tener cuidado porque se pueden perder datos importantes si se borra un paciente por error.
+        # Si se borra un paciente, el campo patient_id de las citas
+        # asociadas a ese paciente se establecerá en null (vacío). Esto puede
+        # ser útil en algunos casos, pero hay que tener cuidado porque se
+        # pueden perder datos importantes si se borra un paciente por error.
         # ondelete="set null",
     )
     date_appointment = fields.Date(string="Date")
-    note = fields.Text("Note")
+    note = fields.Text()
     aditional_note = fields.Text("Aditional note")
     state = fields.Selection(
         string="Status",
@@ -47,18 +70,28 @@ class HospitalAppointment(models.Model):
         "appointment_id",
         string="Lines",
     )
+    # total_qty es un campo calculado; si se marca store=True, el valor se
+    # almacena en la base de datos y podrá usarse en filtros y búsquedas.
+    # Al poner store=True, el campo total_qty no se recalculará si el método
+    # _compute_total_qty no tiene el decorador @api.depends() adecuado.
     total_qty = fields.Float(
         compute="_compute_total_qty",
         string="Total quantity",
-        store=True,  # total_qty es un campo calculado, pero si se marca como store=True, se almacenará el valor en la base de datos y se podrá usar en filtros y búsquedas
-        # al poner store=True, el campo total_qty no se recalculará si en el método _compute_total_qty no tiene el decorador @api.depends() adecuado.
+        store=True,
     )
     date_of_birth = fields.Date(
         related="patient_id.date_of_birth",
-        # No es necesario poner string="Date of Birth" porque al ser un campo relacionado, Odoo automáticamente toma el string del campo relacionado.
+        # No es necesario poner string="Date of Birth" porque al ser un campo
+        # relacionado, Odoo automáticamente toma el string del campo
+        # relacionado.
         # string="Date of Birth",
-        store=True,  # date_of_birth es un campo relacionado, pero si se marca como store=True, se almacenará el valor en la base de datos y se podrá usar en filtros y búsquedas
-        # al poner store=True no se necesita poner ningún tipo de decorador, como es el caso de los campos calculados que queremos guardar su valor en BD.
+        # date_of_birth es un campo relacionado; si se marca store=True, el
+        # valor se almacena en la base de datos y podrá usarse en filtros y
+        # búsquedas.
+        # Al poner store=True no se necesita poner ningún tipo de decorador,
+        # como es el caso de los campos calculados que queremos guardar su
+        # valor en BD.
+        store=True,
     )
 
     @api.model_create_multi

@@ -6,7 +6,6 @@ oca/l10n-spain:
   - "*"
 oca/web:
   - "*"
-
 # muk/base:
 #   - "*"
 # muk/web:

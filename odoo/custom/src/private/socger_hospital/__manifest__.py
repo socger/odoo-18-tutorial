@@ -1,19 +1,16 @@
 {
     "name": "Hospital management system",
     "summary": "Sistema de gestión hospitalaria",
-    "author": "Socger",
+    "author": "Galvintec",
     "license": "LGPL-3",
     "version": "18.0.0.1.0",
     "category": "Hospital",
-    "depends": [
-        "base",
-        "mail",
-        "product"
-    ],
+    "depends": ["base", "mail", "product"],
     "installable": True,
     "application": True,
     "auto_install": False,
     "data": [
+        "security/security.xml",
         "security/ir.model.access.csv",
         "data/sequence.xml",
         "views/patient_views.xml",
