@@ -21,4 +21,33 @@
         />
         <field name="comment">this user will have access to patient details.</field>
     </record>
+
+    <!-- ================ -->
+    <!-- | RECORD RULES |-->
+    <!-- ================ -->
+    <!-- El usuario logueado sólo podrá ver citas creadas por él mismo.
+         Da igual que tenga privilegios de doctor o de recepcionista. -->
+    <record id="receptionist_own_appointment_rule" model="ir.rule">
+        <field name="name">receptionist: view own records</field>
+        <field name="model_id" ref="model_hospital_appointment" />
+        <!-- <field eval="False" name="global"/> -->
+        <field
+            name="groups"
+            eval="[Command.set([ref('socger_hospital.group_hospital_receptionists')])]"
+        />
+
+        <field name="domain_force">[('create_uid','=', user.id)]</field>
+    </record>
+
+    <record id="doctor_view_all_appointment_rule" model="ir.rule">
+        <field name="name">doctor: view all records</field>
+        <field name="model_id" ref="model_hospital_appointment" />
+        <!-- <field eval="False" name="global"/> -->
+        <field
+            name="groups"
+            eval="[Command.set([ref('socger_hospital.group_hospital_doctors')])]"
+        />
+
+        <field name="domain_force">[]</field>
+    </record>
 </odoo>
