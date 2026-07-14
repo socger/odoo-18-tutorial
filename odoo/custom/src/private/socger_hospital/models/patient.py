@@ -58,6 +58,21 @@ class HospitalPatient(models.Model):
     #     tracking=True,
     # )
 
+    is_minor = fields.Boolean(string="Minor")
+
+    # -----------------------------------------------------------------------------
+    # Estos serían cambios en el campo guardian, pero afectarían a todas las vistas
+    # -----------------------------------------------------------------------------
+    # guardian = fields.Char(
+    #     string="Guardian",
+    #     required=True,
+    #     readonly=True,
+    #     invisible=True
+    # )
+    #
+    guardian = fields.Char()
+    weight = fields.Float()
+
     def _compute_age(self):
         for patient in self:
             if patient.date_of_birth:

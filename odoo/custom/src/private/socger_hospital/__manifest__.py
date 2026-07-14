@@ -5,7 +5,7 @@
     "license": "LGPL-3",
     "version": "18.0.0.1.0",
     "category": "Hospital",
-    "depends": ["base", "mail", "product"],
+    "depends": ["base", "mail", "product", "account"],
     "installable": True,
     "application": True,
     "auto_install": False,
@@ -18,6 +18,7 @@
         "views/appointment_views.xml",
         "views/appointment_line_views.xml",
         "views/patient_tag_views.xml",
+        "views/account_move_views.xml",
         "views/menu.xml",
     ],
 }

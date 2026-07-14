@@ -23,10 +23,46 @@
                             <group>
                                 <field name="name" />
                                 <field name="date_of_birth" />
-                                <field name="age" optional="show" />
+                                <field name="age" />
+                                <field name="is_minor" />
+
+                                <!--
+                                    Estos serían cambios en el campo guardian, pero sólo para esta vista de formulario.
+                                    No afectan al modelo ni a otras vistas.
+                                -->
+                                <!-- Para hacer invisible el campo guardian, podemos usar invisible="1" o invisible="True". Pero si usamos invisible="1", el campo guardian no se mostrará en la vista de formulario, pero sí se mostrará en la vista de lista. Por lo tanto, es mejor usar invisible="True" para que el campo guardian no se muestre en ninguna vista.
+                                    <field name="guardian" invisible="1"/>
+                                -->
+                                <!-- Para hacer que el campo guardian sea de solo lectura, podemos usar readonly="1" o readonly="True".
+                                    <field name="guardian" readonly="1"/>
+                                -->
+                                <!--
+                                    =====================================================================================================
+                                    Con invisible="not is_minor", el campo guardian sólo será visible si is_minor es True.
+                                    Si is_minor es False, el campo guardian no será visible.
+                                    =====================================================================================================
+                                    Cpm reqiored="is_minor", el campo guardian será obligatorio si is_minor es True.
+                                    Si is_minor es False, el campo guardian no será obligatorio.
+                                    =====================================================================================================
+                                -->
+                                <field
+                                    name="guardian"
+                                    required="is_minor"
+                                    invisible="not is_minor"
+                                />
+                                <!-- <field
+                                    name="guardian"
+                                    invisible="name == 'test'"
+                                    required="name != 'test'"
+                                /> -->
                             </group>
+
                             <group>
                                 <field name="gender" />
+
+                                <!-- <field name="weight" /> -->
+                                <field name="weight" readonly="gender == 'female'" />
+
                                 <field name="tag_ids" widget="many2many_tags" />
                                 <!-- <field name="product_ids" /> -->
                             </group>
@@ -39,6 +75,54 @@
                     </sheet>
                 </sheet>
             </form>
+        </field>
+    </record>
+
+    <record id="view_hospital_patient_search" model="ir.ui.view">
+        <field name="name">hospital.patient.search</field>
+        <field name="model">hospital.patient</field>
+        <field name="arch" type="xml">
+            <search string="Patients">
+                <field name="name" />
+                <field name="date_of_birth" />
+                <field name="gender" />
+                <field name="guardian" />
+
+                <!-- Estos filtros al no tener <separator> los consideraría como or si se eligen los dos desde la app -->
+                <filter
+                    string="Male"
+                    name="male_patients"
+                    domain="[('gender', '=', 'male')]"
+                />
+                <filter
+                    string="Female"
+                    name="female_patients"
+                    domain="[('gender', '=', 'female')]"
+                />
+
+                <separator />
+
+                <!-- Estos filtros los considera como and al tener <separator> -->
+                <filter
+                    string="Male"
+                    name="male_patients"
+                    domain="[('gender', '=', 'male')]"
+                />
+                <separator />
+                <filter
+                    string="Female"
+                    name="female_patients"
+                    domain="[('gender', '=', 'female')]"
+                />
+
+                <group expand="1" string="Group By">
+                    <filter
+                        name="group_by_gender"
+                        string="Gender"
+                        context="{'group_by' : 'gender'}"
+                    />
+                </group>
+            </search>
         </field>
     </record>
 
