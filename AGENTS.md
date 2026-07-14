@@ -129,6 +129,129 @@ edit data XML and the update fails with an "extra content" assertion.
 - Initial lang `es_ES`. `odoo_dbfilter: ^prod` for prod.
 - Port prefix env: `PORT_PREFIX` (default `18`) controls the `18xxx` host port mapping.
 
+## Sync script (resources/scripts/sync.sh)
+
+Sincronización bidireccional local <-> remoto con `rsync` sobre SSH. Útil para
+subir/bajar el proyecto (o parte de él) a un servidor de despliegue/staging sin depender
+de git para ficheros no versionizados (config locales, assets, etc.).
+
+### Setup inicial (una vez)
+
+1. Copia la plantilla de configuración y rellena tus credenciales:
+   ```
+   cp resources/scripts/sync.conf.example resources/scripts/sync.conf
+   ```
+   Editar `resources/scripts/sync.conf`: `REMOTE_USER`, `REMOTE_HOST`, `REMOTE_PATH`
+   (requeridas) y opcionalmente `REMOTE_PORT`, `SSH_IDENTITY`.
+2. (Opcional) Crea excludes adicionales:
+   ```
+   cp .syncignore.example .syncignore
+   ```
+   `.syncignore` admite una regla `--exclude` de rsync por línea.
+
+> `sync.conf` y `.syncignore` están en `.gitignore` — **no se commitean credenciales
+> reales**. Las plantillas `.example` sí se versionan.
+
+### Orden de prioridad de configuración
+
+1. Variables de entorno ya exportadas (`REMOTE_USER=...` etc.) — **tienen prioridad**
+   sobre el fichero.
+2. `resources/scripts/sync.conf` (si existe).
+3. Defaults internos (`REMOTE_PORT=22`, `SSH_IDENTITY=""`).
+
+### Variables de configuración
+
+| Variable       | Req. | Default | Descripción                                                      |
+| -------------- | ---- | ------- | ---------------------------------------------------------------- |
+| `REMOTE_USER`  | sí   | —       | Usuario SSH del servidor remoto.                                 |
+| `REMOTE_HOST`  | sí   | —       | Host o IP del servidor remoto.                                   |
+| `REMOTE_PATH`  | sí   | —       | Ruta absoluta del proyecto en el remoto.                         |
+| `REMOTE_PORT`  | no   | `22`    | Puerto SSH.                                                      |
+| `SSH_IDENTITY` | no   | `""`    | Fichero de clave privada (`-i`). Vacío = agente/`~/.ssh/config`. |
+
+### Uso
+
+```
+./resources/scripts/sync.sh <push|pull> [opciones] [path...]
+```
+
+- `push` — local -> remoto
+- `pull` — remoto -> local
+
+### Opciones
+
+| Opción          | Alias | Descripción                                                                 |
+| --------------- | ----- | --------------------------------------------------------------------------- |
+| `push` / `pull` | —     | Dirección de la sincronización (obligatoria, primera).                      |
+| `--dry-run`     | `-n`  | Simula la transferencia (no escribe nada).                                  |
+| `--delete`      | —     | Borra en destino lo que no existe en origen (mirror real). Opt-in.          |
+| `--verbose`     | `-v`  | Salida detallada con `--progress`.                                          |
+| `--help`        | `-h`  | Muestra la ayuda y sale.                                                    |
+| `[path...]`     | —     | Paths relativos a la raíz del proyecto para acotar. Default: raíz completa. |
+
+### Excludes
+
+- **Por defecto** (siempre se aplican, push y pull): `.git/`, `.venv/`, `.vscode/`,
+  `.zed/`.
+- **Adicionales**: si existe `<raiz>/.syncignore` se pasa a rsync como `--exclude-from`.
+  Una regla por línea, formato `--exclude` de rsync (patrones relativos a la raíz del
+  proyecto).
+
+### Semántica de paths
+
+- Path local por defecto = raíz del proyecto (el script calcula `../../` desde
+  `resources/scripts/`).
+- Los directorios reciben **trailing slash** → rsync sincroniza el _contenido_ del dir,
+  no el dir en sí.
+- En `pull` con múltiples paths, el script itera internamente reconstruyendo el subpath
+  relativo en el remoto (rsync no soporta múltiples destinos locales en una sola
+  invocación).
+
+### Flags rsync inyectados
+
+Base: `-a --compress --human-readable`. Transporte:
+`-e "ssh -p <REMOTE_PORT> -i <SSH_IDENTITY> -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=60"`
+(`-i` solo si `SSH_IDENTITY` no está vacío).
+
+### Ejemplos
+
+```
+# Previsualizar un push de toda la raíz
+./resources/scripts/sync.sh push --dry-run
+
+# Subir solo nuestros módulos privados
+./resources/scripts/sync.sh push odoo/custom/src/private/
+
+# Bajar del remoto haciendo mirror (¡peligro! revisa --dry-run antes)
+./resources/scripts/sync.sh pull --dry-run --delete
+./resources/scripts/sync.sh pull --delete
+
+# Salida detallada con progreso
+./resources/scripts/sync.sh push -v odoo/custom/src/private/
+
+# Override puntual vía env var (sin tocar sync.conf)
+REMOTE_HOST=staging.example.com ./resources/scripts/sync.sh push -n
+
+# Múltiples paths
+./resources/scripts/sync.sh push odoo/custom/src/private/ tasks.py AGENTS.md
+```
+
+### Seguridad
+
+- `--delete` es **opt-in**: por defecto el sync solo copia/actualiza, no borra. Haz
+  **siempre** `--dry-run` antes de un `--delete`, especialmente en `pull`.
+- El script usa `set -euo pipefail`: aborta ante errores.
+- `StrictHostKeyChecking=accept-new` añade el host a `known_hosts` en la primera
+  conexión (no bloquea el primer sync) pero rechaza cambios de clave de un host ya
+  conocido.
+
+### No sincronizar esto
+
+Recuerda la sección "Things not to do" más abajo: no edites ni sincronices `odoo/auto/`,
+`odoo/custom/src/odoo/` ni `odoo/custom/src/oca/` (generados / git-aggregated). El
+`.syncignore.example` ya los excluye por defecto — mantén esas reglas al crear tu
+`.syncignore`.
+
 ## Things not to do
 
 - Don't edit files under `odoo/auto/` — generated by the build.
