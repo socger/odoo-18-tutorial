@@ -1,0 +1,30 @@
+# .syncignore.example — copia este fichero a .syncignore en la raíz del
+#   proyecto y ajústalo a tus necesidades.
+#   cp .syncignore.example .syncignore
+#
+# .syncignore NO se commitea (ya está en .gitignore).
+# Cada línea es una regla --exclude de rsync (mismo formato que --exclude-from).
+# Las reglas son relativas a la raíz del proyecto y se aplican en push y pull.
+
+# --- Generado por la herramienta, pesado o regenerable ---
+odoo/auto/
+odoo/custom/src/odoo/
+odoo/custom/src/oca/
+
+# --- Entornos virtuales y cachés Python ---
+__pycache__/
+*.pyc
+*.egg-info/
+
+# --- Editores / IDE / SO ---
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# --- Artefactos de build ---
+*.mo
+
+# --- Docker locales / secretos ---
+.docker/
+docker-compose.override.yml

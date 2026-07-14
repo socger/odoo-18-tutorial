@@ -29,3 +29,7 @@
 
 # Project-specific docker configurations
 /.docker/
+
+# Sync script — keep examples, ignore real config and local ignores
+/resources/scripts/sync.conf
+/.syncignore
