@@ -91,12 +91,12 @@
                 <!-- Estos filtros al no tener <separator> los consideraría como or si se eligen los dos desde la app -->
                 <filter
                     string="Male"
-                    name="male_patients"
+                    name="male_patients_or"
                     domain="[('gender', '=', 'male')]"
                 />
                 <filter
                     string="Female"
-                    name="female_patients"
+                    name="female_patients_or"
                     domain="[('gender', '=', 'female')]"
                 />
 
@@ -122,6 +122,10 @@
                         context="{'group_by' : 'gender'}"
                     />
                 </group>
+
+                <searchpanel>
+                    <field name="gender" string="Gender" enable_counters="1" />
+                </searchpanel>
             </search>
         </field>
     </record>
@@ -136,6 +140,17 @@
                 (0,0,{'view_mode':'list', 'view_id': ref('view_hospital_patient_list')}),
                 (0,0,{'view_mode':'form', 'view_id': ref('view_hospital_patient_form')})]"
         />
+
+        <field name="search_view_id" ref="view_hospital_patient_search" />
+
+        <!-- con la línea de abajo conseguimos poner un filtro por defecto en esta vista de acción, en este caso el filtro de pacientes femeninos.
+             Esto se puede hacer también desde la app, pero si queremos que siempre esté activo este filtro, lo podemos hacer desde aquí. -->
+        <!-- <field name="context">{'search_default_female_patients': 1}</field> -->
+
+        <!-- con la línea de abajo conseguimos que por defecto se agrupe por género en esta vista de acción, en este caso el filtro de pacientes femeninos.
+        Esto se puede hacer también desde la app, pero si queremos que siempre esté activo este filtro, lo podemos hacer desde aquí. -->
+        <field name="context">{'search_default_group_by_gender': 1}</field>
+
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create a new patient
