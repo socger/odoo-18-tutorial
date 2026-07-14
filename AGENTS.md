@@ -1,133 +1,141 @@
 # AGENTS.md
 
-Guidance for OpenCode agents working in this Doodba-scaffolded Odoo 18 project.
+Guía para agentes de OpenCode que trabajan en este proyecto Odoo 18 scaffoldizado con
+Doodba.
 
-## Stack & layout
+## Stack y estructura
 
-- **Doodba** scaffolding (copier template v9.6.1) for **Odoo 18.0**, Postgres 18,
-  Traefik 2 proxy. See upstream docs: <https://github.com/Tecnativa/doodba>.
-- Everything runs in Docker Compose. No local Python/Node toolchain is expected;
-  commands go through `invoke` (see `tasks.py`).
-- Repo root is the project root. `docker-compose.yml` is a symlink to `devel.yaml`;
-  other envs: `test.yaml`, `prod.yaml`. Shared service base in `common.yaml`.
-- Addon sources (mounted read-only into the container at `/opt/odoo/custom`):
-  - `odoo/custom/src/odoo/` — Odoo core (git-aggregated; OCB is the default target per
-    `repos.yaml`).
-  - `odoo/custom/src/oca/` — OCA addons aggregated via `addons.yaml` (currently
-    `bank-payment`, `community-data-files`, `l10n-spain`, `web`, all `*`).
-  - `odoo/custom/src/private/` — **our own modules**. This is where most work happens.
-    Current modules: `socger_hospital`, `glv_basic_module`.
-  - `odoo/auto/addons/` — build-time aggregated/auto-installed addons (generated; do not
-    edit, not version-controlled long-term).
-- `odoo/custom/dependencies/` — system deps injected at image build (`apt.txt`,
-  `apt_build.txt`, `pip.txt`, `npm.txt`, `gem.txt`).
-- `odoo/custom/{conf.d,build.d,entrypoint.d}/` — Doodba hook directories (currently
-  empty).
+- **Doodba** scaffolding (plantilla copier v9.6.1) para **Odoo 18.0**, Postgres 18,
+  proxy Traefik 2. Ver docs upstream: <https://github.com/Tecnativa/doodba>.
+- Todo corre en Docker Compose. No se espera toolchain local de Python/Node; los
+  comandos se ejecutan a través de `invoke` (ver `tasks.py`).
+- La raíz del repo es la raíz del proyecto. `docker-compose.yml` es un symlink a
+  `devel.yaml`; otros entornos: `test.yaml`, `prod.yaml`. Base de servicios compartida
+  en `common.yaml`.
+- Fuentes de addons (montadas read-only en el contenedor en `/opt/odoo/custom`):
+  - `odoo/custom/src/odoo/` — núcleo de Odoo (git-aggregated; OCB es el target por
+    defecto según `repos.yaml`).
+  - `odoo/custom/src/oca/` — addons OCA agregados vía `addons.yaml` (actualmente
+    `bank-payment`, `community-data-files`, `l10n-spain`, `web`, todos `*`).
+  - `odoo/custom/src/private/` — **nuestros propios módulos**. Aquí es donde ocurre la
+    mayor parte del trabajo. Módulos actuales: `socger_hospital`, `glv_basic_module`.
+  - `odoo/auto/addons/` — addons agregados/auto-instalados en build-time (generados; no
+    editar, no versionados a largo plazo).
+- `odoo/custom/dependencies/` — dependencias de sistema inyectadas en el build de la
+  imagen (`apt.txt`, `apt_build.txt`, `pip.txt`, `npm.txt`, `gem.txt`).
+- `odoo/custom/{conf.d,build.d,entrypoint.d}/` — directorios de hooks de Doodba
+  (actualmente vacíos).
 
-## Dev commands (run from repo root)
+## Comandos de desarrollo (ejecutar desde la raíz del repo)
 
-All tasks are defined in `tasks.py` and run via `invoke <task>` (`pip install invoke` if
-missing). They wrap `docker compose`.
+Todas las tareas están definidas en `tasks.py` y se ejecutan vía `invoke <task>`
+(`pip install invoke` si falta). Son wrappers sobre `docker compose`.
 
-- `invoke develop` — set up basic dev env (run once).
-- `invoke img_build` — build the `odoo` image. Rebuild after changing
-  `odoo/custom/dependencies/*`, `Dockerfile`, or `repos.yaml`/`addons.yaml`.
-- `invoke start` — `docker compose up` (detached) of `devel.yaml`. Odoo on
+- `invoke develop` — preparar el entorno básico de dev (ejecutar una vez).
+- `invoke img_build` — construir la imagen `odoo`. Rebuild tras cambiar
+  `odoo/custom/dependencies/*`, `Dockerfile`, o `repos.yaml`/`addons.yaml`.
+- `invoke start` — `docker compose up` (detached) de `devel.yaml`. Odoo en
   `127.0.0.1:18069`, longpolling `18072`, livechat `18899`, pgweb `18081`, smtp
   (mailhog) `18025`, wdb `18984`.
-- `invoke stop [--purge]` — stop (and optionally purge containers/networks).
-- `invoke restart` — restart odoo container(s).
-- `invoke logs [--tail N] [--no-follow] [--container NAME]` — tail logs.
-- `invoke install [-w socger_hospital]` — install a module (or
-  `--private`/`--core`/`--extra`/`--enterprise`). With no args, infers the addon from
+- `invoke stop [--purge]` — detener (y opcionalmente purgar contenedores/redes).
+- `invoke restart` — reiniciar el/los contenedor(es) de odoo.
+- `invoke logs [--tail N] [--no-follow] [--container NAME]` — ver el tail de logs.
+- `invoke install [-w socger_hospital]` — instalar un módulo (o
+  `--private`/`--core`/`--extra`/`--enterprise`). Sin args, infiere el addon desde el
   CWD.
-- `invoke test [-w socger_hospital] [--init ...]` — run Odoo tests in the `devel` DB.
-  See `tasks.py:1005` for full flag set.
-- `invoke resetdb` — drop & recreate the `devel` DB with a module set.
-- `invoke lint` — run `pre-commit run --all-files` (this is the canonical lint/format
-  step).
+- `invoke test [-w socger_hospital] [--init ...]` — ejecutar los tests de Odoo en la BD
+  `devel`. Ver `tasks.py:1005` para el set completo de flags.
+- `invoke resetdb` — dropear y recrear la BD `devel` con un conjunto de módulos.
+- `invoke lint` — ejecutar `pre-commit run --all-files` (este es el paso canónico de
+  lint/format).
 
-### Re-aggregating addon sources
+### Re-agregar las fuentes de addons
 
-After editing `repos.yaml` or `addons.yaml`:
+Tras editar `repos.yaml` o `addons.yaml`:
 
 ```
 export DOODBA_GITAGGREGATE_UID="$(id -u)" DOODBA_GITAGGREGATE_GID="$(id -g)" DOODBA_UMASK="$(umask)"
 docker compose -f setup-devel.yaml run --rm odoo
 ```
 
-Then `invoke img_build`. `invoke git_aggregate` is the invoke wrapper.
+Luego `invoke img_build`. `invoke git_aggregate` es el wrapper de invoke.
 
 ## Lint / format / typecheck
 
-- **Lint = `invoke lint`** (= `pre-commit run --all-files`). This is the only
-  verification step; there is no separate typecheck. Run it before declaring a task
-  done.
-- Pre-commit hooks (`.pre-commit-config.yaml`): OCA `oca-checks-odoo-module` +
-  `oca-checks-po`, `ruff --fix`, `ruff-format`, `prettier` with `@prettier/plugin-xml`
-  (so XML gets reformatted), `pylint_odoo` (mandatory rcfile `.pylintrc-mandatory` +
-  optional `.pylintrc` with `--exit-zero`), `eslint`, plus standard hygiene hooks.
-- Node pinned to `18.17.1`, Python `python3`. Prettier is pinned to `2.7.1` with
-  `plugin-xml@v2.2.0` (do not bump — upstream HACK noted in `.pre-commit-config.yaml`).
-- Python config: `.ruff.toml`. Pylint configs: `.pylintrc`, `.pylintrc-mandatory`.
+- **Lint = `invoke lint`** (= `pre-commit run --all-files`). Este es el único paso de
+  verificación; no hay typecheck separado. Ejecútalo antes de dar una tarea por
+  terminada.
+- Hooks de pre-commit (`.pre-commit-config.yaml`): OCA `oca-checks-odoo-module` +
+  `oca-checks-po`, `ruff --fix`, `ruff-format`, `prettier` con `@prettier/plugin-xml`
+  (para que el XML se reformatee), `pylint_odoo` (rcfile obligatorio
+  `.pylintrc-mandatory` + opcional `.pylintrc` con `--exit-zero`), `eslint`, además de
+  hooks estándar de higiene.
+- Node fijado a `18.17.1`, Python `python3`. Prettier está fijado a `2.7.1` con
+  `plugin-xml@v2.2.0` (no subir de versión — HACK upstream anotado en
+  `.pre-commit-config.yaml`).
+- Config de Python: `.ruff.toml`. Configs de Pylint: `.pylintrc`, `.pylintrc-mandatory`.
 
-## Private module conventions
+## Convenciones de módulos privados
 
-- Standard Odoo module layout: `__manifest__.py`, `__init__.py`, `models/`, `views/`,
+- Layout estándar de módulo Odoo: `__manifest__.py`, `__init__.py`, `models/`, `views/`,
   `security/` (`security.xml` + `ir.model.access.csv`), `data/`, `static/description/`.
-- Manifest `version` uses the `18.0.x.y.z` scheme (e.g. `18.0.0.1.0`). License `LGPL-3`
-  for `socger_hospital`.
-- `data` files in manifests are listed in load order: `security` → `ir.model.access.csv`
-  → `data` → `views` → `menu.xml` last (menus reference actions defined in view files).
-  **Keep `menu.xml` last** — otherwise `action=` refs fail at install.
-- Security XML wraps records in `<odoo><data noupdate="0">…</data></odoo>`.
-- `ir.model.access.csv` naming: `access_<model>_<group>`, columns
+- El `version` del manifest usa el esquema `18.0.x.y.z` (p.ej. `18.0.0.1.0`). Licencia
+  `LGPL-3` para `socger_hospital`.
+- Los ficheros `data` en los manifests se listan en orden de carga: `security` →
+  `ir.model.access.csv` → `data` → `views` → `menu.xml` al final (los menús referencian
+  acciones definidas en los ficheros de vistas). **Mantén `menu.xml` el último** — en
+  caso contrario los refs `action=` fallan al instalar.
+- El XML de seguridad envuelve los records en
+  `<odoo><data noupdate="0">…</data></odoo>`.
+- Nomenclatura de `ir.model.access.csv`: `access_<model>_<group>`, columnas
   `id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink`.
-- READMEs for private addons are **generated** by the `oca-gen-addon-readme` pre-commit
-  hook from `README.rst` fragments (template `.module-readme.rst.j2`, org `Galvintec`,
-  repo `tutorial`, branch `18.0`). Do not hand-edit generated `README.md` /
-  `static/description/index.html`.
+- Los README de los addons privados son **generados** por el hook de pre-commit
+  `oca-gen-addon-readme` a partir de fragmentos `README.rst` (template
+  `.module-readme.rst.j2`, org `Galvintec`, repo `tutorial`, branch `18.0`). No edites a
+  mano los `README.md` / `static/description/index.html` generados.
 
-## Odoo XML gotcha: RNG "extra content" errors
+## Pega conocida de XML en Odoo: errores RNG "extra content"
 
-When installing/updating a module, Odoo validates every XML data file against
-`odoo/custom/src/odoo/odoo/import_xml.rng`. A failure raises:
+Al instalar/actualizar un módulo, Odoo valida cada fichero de datos XML contra
+`odoo/custom/src/odoo/odoo/import_xml.rng`. Un fallo lanza:
 
 ```
 AssertionError: Element odoo has extra content: <tag>, line N
 ```
 
-**The reported line `N` and the offending element are NOT reliable.** lxml's RelaxNG
-validator reports the _first_ child of `<odoo>` it could not match, not the one that
-actually has the error. Typical real cause: an attribute that is not allowed on that
-element by the RNG (typo, wrong singular/plural).
+**La línea `N` reportada y el elemento infractor NO son fiables.** El validador RelaxNG
+de lxml reporta el _primer_ hijo de `<odoo>` que no pudo casar, no el que realmente
+tiene el error. Causa real típica: un atributo que el RNG no permite en ese elemento
+(typo, singular/plural equivocado).
 
-Known trap (already fixed once in this repo): `<menuitem>` accepts `groups` (plural) but
-**not** `group`. The RNG `menuitem_attrs` allows only: `id`, `name`, `sequence`
-(xsd:int, no trailing spaces), `groups`, `active`; plus contextually `parent`, `action`,
-`web_icon`. A stray `group="…"` made _every_ `<menuitem>` in the file show up as "extra
-content" pointing at line 7.
+Trampa conocida (ya corregida una vez en este repo): `<menuitem>` acepta `groups`
+(plural) pero **no** `group`. El RNG `menuitem_attrs` solo permite: `id`, `name`,
+`sequence` (xsd:int, sin espacios al final), `groups`, `active`; más contextualmente
+`parent`, `action`, `web_icon`. Un `group="…"` suelto hacía que _cada_ `<menuitem>` del
+fichero apareciera como "extra content" apuntando a la línea 7.
 
-**Fast local validation before re-updating in Odoo:**
+**Validación local rápida antes de re-actualizar en Odoo:**
 
 ```
 xmllint --noout --relaxng odoo/custom/src/odoo/odoo/import_xml.rng <file.xml>
 ```
 
-This pinpoints the exact bad attribute, unlike the Odoo traceback. Run it whenever you
-edit data XML and the update fails with an "extra content" assertion.
+Esto localiza el atributo incorrecto exacto, a diferencia del traceback de Odoo.
+Ejecútalo siempre que edites XML de datos y la actualización falle con una aserción
+"extra content".
 
-## Docker / env notes
+## Notas de Docker / env
 
-- Dev DB name: `devel` (user `odoo`, password `odoopassword`). Postgres image
-  `ghcr.io/tecnativa/postgres-autoconf:18-alpine`.
-- Dev compose mounts `./odoo/custom` **read-only** into the container; edits to private
-  addons are picked up live (`--dev=reload,qweb,werkzeug,xml` is set in `devel.yaml`).
-  `./odoo/auto` is mounted read-write.
-- `DOODBA_WITHOUT_DEMO=all` to skip demo data; default in `test.yaml` is `all`, in
-  `devel.yaml` is `false`.
-- Initial lang `es_ES`. `odoo_dbfilter: ^prod` for prod.
-- Port prefix env: `PORT_PREFIX` (default `18`) controls the `18xxx` host port mapping.
+- Nombre de la BD de dev: `devel` (usuario `odoo`, password `odoopassword`). Imagen
+  Postgres `ghcr.io/tecnativa/postgres-autoconf:18-alpine`.
+- El compose de dev monta `./odoo/custom` **read-only** en el contenedor; las ediciones
+  de addons privados se recogen en vivo (`--dev=reload,qweb,werkzeug,xml` está definido
+  en `devel.yaml`). `./odoo/auto` se monta read-write.
+- `DOODBA_WITHOUT_DEMO=all` para saltar los datos demo; el default en `test.yaml` es
+  `all`, en `devel.yaml` es `false`.
+- Lang inicial `es_ES`. `odoo_dbfilter: ^prod` para prod.
+- Env de prefijo de puerto: `PORT_PREFIX` (default `18`) controla el mapeo de puertos
+  host `18xxx`.
 
 ## Sync script (resources/scripts/sync.sh)
 
@@ -247,17 +255,18 @@ REMOTE_HOST=staging.example.com ./resources/scripts/sync.sh push -n
 
 ### No sincronizar esto
 
-Recuerda la sección "Things not to do" más abajo: no edites ni sincronices `odoo/auto/`,
-`odoo/custom/src/odoo/` ni `odoo/custom/src/oca/` (generados / git-aggregated). El
-`.syncignore.example` ya los excluye por defecto — mantén esas reglas al crear tu
-`.syncignore`.
+Recuerda la sección "Cosas que no hacer" más abajo: no edites ni sincronices
+`odoo/auto/`, `odoo/custom/src/odoo/` ni `odoo/custom/src/oca/` (generados /
+git-aggregated). El `.syncignore.example` ya los excluye por defecto — mantén esas
+reglas al crear tu `.syncignore`.
 
-## Things not to do
+## Cosas que no hacer
 
-- Don't edit files under `odoo/auto/` — generated by the build.
-- Don't edit `odoo/custom/src/odoo/` or `odoo/custom/src/oca/` — aggregated from
-  upstream git repos; changes will be lost on re-aggregate. Fix upstream and
-  re-aggregate instead.
-- Don't bump Prettier/`plugin-xml` versions blindly — pinned for a reason (see HACK
-  comments in `.pre-commit-config.yaml`).
-- Don't hand-edit generated addon `README.md` or `static/description/index.html`.
+- No edites ficheros bajo `odoo/auto/` — generados por el build.
+- No edites `odoo/custom/src/odoo/` ni `odoo/custom/src/oca/` — agregados de repos git
+  upstream; los cambios se perderán al re-agregar. Arregla upstream y re-agrega en su
+  lugar.
+- No subir a ciegas las versiones de Prettier/`plugin-xml` — están fijadas por una razón
+  (ver comentarios HACK en `.pre-commit-config.yaml`).
+- No edites a mano el `README.md` o `static/description/index.html` generados de un
+  addon.
