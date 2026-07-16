@@ -4,7 +4,7 @@
     "author": "Galvintec",
     "license": "LGPL-3",
     "version": "18.0.0.1.0",
-    "category": "Hospital",
+    "category": "Other",
     "depends": ["base", "mail", "product", "account"],
     "installable": True,
     "application": True,

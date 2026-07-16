@@ -6,7 +6,7 @@ class PatientTag(models.Model):
     _name = "patient.tag"
     _description = "Patient Tag"
     _rec_name = "name"
-    _order = "sequence,id"
+    _order = "sequence, id"
 
     name = fields.Char(required=True)
     sequence = fields.Integer(default=10)
@@ -23,11 +23,14 @@ class PatientTag(models.Model):
     # asociadas antes de realizar alguna acción.
     # Pero es necesario el uso del @api.ondelete(at_uninstall=False)
     @api.ondelete(at_uninstall=False)
-    def check_patient_tags(self):
-        for tag in self:
-            domain = [("tag_ids", "in", [tag.id])]
-            patients = self.env["hospital.patient"].search(domain)
-            if patients:
-                raise ValidationError(
-                    _("The tag: '%s' ... has patients associated.", tag.name)
+    def _check_patient_tags(self) -> None:
+        """Prevent deletion when the tag is still used by patients."""
+        patients = self.env["hospital.patient"].search([("tag_ids", "in", self.ids)])
+        if patients:
+            tag_names = self.mapped("name")
+            raise ValidationError(
+                _(
+                    "The tag(s): %(names)s ... has patients associated.",
+                    names=", ".join(tag_names),
                 )
+            )

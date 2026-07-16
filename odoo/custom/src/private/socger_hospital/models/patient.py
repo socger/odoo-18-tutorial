@@ -7,6 +7,7 @@ class HospitalPatient(models.Model):
     _inherit = ["mail.thread"]
     _description = "Patient master"
     _rec_name = "name"
+    _order = "name, id"
 
     name = fields.Char(required=True, tracking=True)
     date_of_birth = fields.Date(string="Date of Birth", tracking=True)
@@ -73,10 +74,12 @@ class HospitalPatient(models.Model):
     guardian = fields.Char()
     weight = fields.Float()
 
-    def _compute_age(self):
+    @api.depends("date_of_birth")
+    def _compute_age(self) -> None:
+        """Compute the patient age from the date of birth."""
+        today = fields.Date.today()
         for patient in self:
             if patient.date_of_birth:
-                today = fields.Date.today()
                 age = today.year - patient.date_of_birth.year
                 if today.month < patient.date_of_birth.month or (
                     today.month == patient.date_of_birth.month
@@ -124,14 +127,16 @@ class HospitalPatient(models.Model):
     # asociadas antes de realizar alguna acción.
     # Pero es necesario el uso del @api.ondelete(at_uninstall=False)
     @api.ondelete(at_uninstall=False)
-    def check_patient_appointments(self):
-        for patient in self:
-            domain = [("patient_id", "=", patient.id)]
-            appintments = self.env["hospital.appointment"].search(domain)
-            if appintments:
-                raise ValidationError(
-                    _(
-                        "The patient: '%s' ... has appointments associated.",
-                        patient.name,
-                    )
+    def _check_patient_appointments(self) -> None:
+        """Prevent deletion when the patient still has appointments."""
+        appointments = self.env["hospital.appointment"].search(
+            [("patient_id", "in", self.ids)]
+        )
+        if appointments:
+            patient_names = self.mapped("name")
+            raise ValidationError(
+                _(
+                    "The patient(s): %(names)s ... has appointments associated.",
+                    names=", ".join(patient_names),
                 )
+            )

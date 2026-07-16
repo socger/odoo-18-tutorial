@@ -4,7 +4,6 @@
         <field name="name">patient.tag.list</field>
         <field name="model">patient.tag</field>
         <field name="arch" type="xml">
-            <!-- <list string="Patient tags" editable="bottom"> -->
             <list string="Patient tags" editable="top">
                 <field name="sequence" widget="handle" />
                 <field name="name" />

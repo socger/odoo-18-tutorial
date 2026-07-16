@@ -18,23 +18,17 @@
         <field name="arch" type="xml">
             <form string="Patient" create="0" delete="0" edit="0">
                 <sheet>
-                    <sheet>
+                    <group>
                         <group>
-                            <group>
-                                <field name="name" />
-                                <field name="date_of_birth" />
-                            </group>
-                            <group>
-                                <field name="gender" />
-                            </group>
+                            <field name="name" />
+                            <field name="date_of_birth" />
                         </group>
-                    </sheet>
-                    <br />
-                    <sheet>
-                        <chatter reload_on_post="True" />
-                        <!-- <chatter/> -->
-                    </sheet>
+                        <group>
+                            <field name="gender" />
+                        </group>
+                    </group>
                 </sheet>
+                <chatter reload_on_post="True" />
             </form>
         </field>
     </record>
@@ -68,9 +62,7 @@
                 (0,0,{'view_mode':'list', 'view_id': ref('view_hospital_patient_readonly_list')}),
                 (0,0,{'view_mode':'form', 'view_id': ref('view_hospital_patient_readonly_form')})]"
         />
-
         <field name="search_view_id" ref="view_hospital_patient_readonly_search" />
-
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Create a new patient

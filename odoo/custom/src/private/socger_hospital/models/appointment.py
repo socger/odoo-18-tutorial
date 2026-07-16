@@ -1,4 +1,5 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class HospitalAppointment(models.Model):
@@ -7,12 +8,17 @@ class HospitalAppointment(models.Model):
     _description = "Hospital appointment"
     _rec_names_search = ["reference", "patient_id"]
     _rec_name = "reference"
+    _order = "date_appointment desc, id"
 
     # reference = fields.Char(
     #     string="Reference", required=True, copy=False, readonly=True,
     #     index=True, default=lambda self: ("New"),
     # )
-    reference = fields.Char(default="New")
+    reference = fields.Char(
+        default="New",
+        copy=False,
+        readonly=True,
+    )
     patient_id = fields.Many2one(
         "hospital.patient",
         string="Patient",
@@ -52,7 +58,7 @@ class HospitalAppointment(models.Model):
     )
     date_appointment = fields.Date(string="Date")
     note = fields.Text()
-    aditional_note = fields.Text("Aditional note")
+    additional_note = fields.Text(string="Additional note")
     state = fields.Selection(
         string="Status",
         selection=[
@@ -70,6 +76,7 @@ class HospitalAppointment(models.Model):
         "appointment_id",
         string="Lines",
     )
+
     # total_qty es un campo calculado; si se marca store=True, el valor se
     # almacena en la base de datos y podrá usarse en filtros y búsquedas.
     # Al poner store=True, el campo total_qty no se recalculará si el método
@@ -101,7 +108,8 @@ class HospitalAppointment(models.Model):
     )
 
     @api.model_create_multi
-    def create(self, vals_list):
+    def create(self, vals_list: list[dict]) -> "HospitalAppointment":
+        """Override create to assign the appointment reference sequence."""
         for vals in vals_list:
             # if vals.get("reference", "New") == "New":
             #     vals["reference"] = self.env["ir.sequence"].next_by_code(
@@ -114,7 +122,8 @@ class HospitalAppointment(models.Model):
         return super().create(vals_list)
 
     @api.depends("appointment_line_ids", "appointment_line_ids.qty")
-    def _compute_total_qty(self):
+    def _compute_total_qty(self) -> None:
+        """Compute the total quantity from the appointment lines."""
         for rec in self:
             # print(rec.appointment_line_ids.mapped("qty"))
             # for line in rec.appointment_line_ids:
@@ -123,38 +132,57 @@ class HospitalAppointment(models.Model):
             # rec.total_qty = sum(line.qty for line in rec.appointment_line_ids)
             rec.total_qty = sum(rec.appointment_line_ids.mapped("qty"))
 
-    def _compute_display_name(self):
+    @api.depends("reference", "patient_id")
+    def _compute_display_name(self) -> None:
+        """Compute the display name from reference and patient."""
         for rec in self:
-            rec.display_name = f"[{rec.reference}] - {rec.patient_id.name}"
+            rec.display_name = f"[{rec.reference}] - {rec.patient_id.name or ''}"
 
-    def action_confirm(self):
+    def action_confirm(self) -> None:
+        """Move appointments from draft to confirmed."""
         for rec in self:
-            rec.state = "confirmed"
+            if rec.state != "draft":
+                raise UserError(_("Only draft appointments can be confirmed."))
+        self.write({"state": "confirmed"})
 
-    def action_ongoing(self):
+    def action_ongoing(self) -> None:
+        """Move appointments from confirmed to ongoing."""
         for rec in self:
-            rec.state = "ongoing"
+            if rec.state != "confirmed":
+                raise UserError(_("Only confirmed appointments can be set as ongoing."))
+        self.write({"state": "ongoing"})
 
-    def action_done(self):
+    def action_done(self) -> None:
+        """Move appointments from ongoing to done."""
         for rec in self:
-            rec.state = "done"
+            if rec.state != "ongoing":
+                raise UserError(_("Only ongoing appointments can be completed."))
+        self.write({"state": "done"})
 
-    def action_cancelled(self):
+    def action_cancelled(self) -> None:
+        """Cancel appointments that are not yet done."""
         for rec in self:
-            rec.state = "cancelled"
+            if rec.state == "done":
+                raise UserError(_("Done appointments cannot be cancelled."))
+        self.write({"state": "cancelled"})
 
 
 class HospitalAppointmentLine(models.Model):
     _name = "hospital.appointment.line"
     _description = "Hospital appointment line"
+    _order = "sequence, id"
 
     appointment_id = fields.Many2one(
         "hospital.appointment",
         string="Appointment",
+        required=True,
+        ondelete="cascade",
+        index=True,
     )
     product_id = fields.Many2one(
         "product.product",
-        string="Products",
+        string="Product",
         required=True,
     )
-    qty = fields.Float(string="Quantity")
+    qty = fields.Float(string="Quantity", default=1.0)
+    sequence = fields.Integer(default=10)

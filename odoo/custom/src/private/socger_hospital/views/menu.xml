@@ -5,6 +5,7 @@
         name="HMS"
         web_icon="socger_hospital,static/description/icon_2.png"
         sequence="38"
+        groups="socger_hospital.group_hospital_receptionists"
     />
 
     <menuitem id="menu_billing" name="Billing" parent="menu_hospital_root" />
@@ -67,5 +68,4 @@
         parent="menu_billing"
         action="account.action_account_payments"
     />
-
 </odoo>

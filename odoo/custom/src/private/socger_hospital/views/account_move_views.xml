@@ -8,7 +8,6 @@
             <xpath expr="//field[@name='invoice_date']" position="after">
                 <field name="appointment_id" />
             </xpath>
-
             <xpath
                 expr="//group[@name='accounting_info_group']/field[@name='auto_post']"
                 position="attributes"
