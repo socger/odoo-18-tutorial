@@ -3,6 +3,38 @@
 Guía para agentes de OpenCode que trabajan en este proyecto Odoo 18 scaffoldizado con
 Doodba.
 
+## Comportamiento del agente (preferencia persistente)
+
+- **Tareas de desarrollo Odoo**: al recibir cualquier tarea de desarrollo Odoo (crear
+  modelos, vistas, seguridad, wizards, reports, controladores, migraciones, etc.), el
+  agente **debe cargar automáticamente el skill `odoo-development-skill`** y aplicar los
+  estándares OCA estrictos que este define:
+  1. **Detectar la versión** de Odoo leyendo `__manifest__.py` (primer número del
+     `version`, p.ej. `18.0.x.y.z` → Odoo 18) antes de aplicar cualquier patrón.
+  2. **No reinventar la rueda**: buscar primero en Odoo core
+     (`odoo/custom/src/odoo/addons/`), luego en OCA (`odoo/custom/src/oca/` y GitHub
+     upstream), antes de desarrollar desde cero. Heredar/extender si existe algo
+     similar.
+  3. **Usar el patrón correspondiente** del librerario en
+     `.agents/skills/odoo-development-skill/skills/` (ver índice en el `SKILL.md` del
+     skill). Para Odoo 18, priorizar las variantes `-18.md` y las guías de migración
+     `*-17-18.md`. Leer el fichero de patrón con herramientas de lectura antes de
+     generar código; no adivinar la sintaxis.
+  4. **Comunicación con el usuario en español**; código, variables y docstrings en
+     inglés (igual que el resto del repo).
+  5. **Verificar** con `invoke lint` (= `pre-commit run --all-files`) antes de dar una
+     tarea por terminada, y validar XML de datos con
+     `xmllint --relaxng odoo/custom/src/odoo/odoo/import_xml.rng <file>` si la
+     actualización falla con aserción "extra content" (ver sección "Pega conocida de
+     XML" más abajo).
+- Los **4 agentes especializados** del skill (`agents/odoo-code-reviewer.md`,
+  `odoo-upgrade-analyzer.md`, `odoo-context-gatherer.md`, `odoo-skill-finder.md`) se
+  cargan bajo demanda cuando la tarea lo requiera (code review, análisis de migración,
+  contexto complejo, navegación de patrones).
+- El skill `odoo-development` (guía general) puede cargarse adicionalmente para
+  refrescar principios ORM/vistas, pero el **canónico es `odoo-development-skill`** por
+  seguir estándares OCA estrictos y cubrir versiones 14–19.
+
 ## Stack y estructura
 
 - **Doodba** scaffolding (plantilla copier v9.6.1) para **Odoo 18.0**, Postgres 18,
