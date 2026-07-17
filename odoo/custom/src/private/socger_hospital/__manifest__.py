@@ -1,7 +1,8 @@
 {
     "name": "Hospital management system",
     "summary": "Sistema de gestión hospitalaria",
-    "author": "Galvintec",
+    "website": "https://www.socger.com",
+    "author": "SocGer",
     "license": "LGPL-3",
     "version": "18.0.0.1.0",
     "category": "Other",
