@@ -50,7 +50,8 @@ Doodba.
   - `odoo/custom/src/oca/` — addons OCA agregados vía `addons.yaml` (actualmente
     `bank-payment`, `community-data-files`, `l10n-spain`, `web`, todos `*`).
   - `odoo/custom/src/private/` — **nuestros propios módulos**. Aquí es donde ocurre la
-    mayor parte del trabajo. Módulos actuales: `socger_hospital`, `glv_basic_module`.
+    mayor parte del trabajo. Módulos actuales: `socger_hospital`, `glv_basic_module`,
+    `socger_expand_fleet`.
   - `odoo/auto/addons/` — addons agregados/auto-instalados en build-time (generados; no
     editar, no versionados a largo plazo).
 - `odoo/custom/dependencies/` — dependencias de sistema inyectadas en el build de la
@@ -97,6 +98,13 @@ Luego `invoke img_build`. `invoke git_aggregate` es el wrapper de invoke.
 - **Lint = `invoke lint`** (= `pre-commit run --all-files`). Este es el único paso de
   verificación; no hay typecheck separado. Ejecútalo antes de dar una tarea por
   terminada.
+- **Importante: `pre-commit run --all-files` solo revisa ficheros trackeados por git.**
+  Los ficheros nuevos (untracked, `??` en `git status`) se ignoran hasta que se
+  `git add`-en. Por tanto, antes de lanzar `invoke lint` para validar ficheros nuevos,
+  haz `git add` de ellos; si no, el lint pasará sin haberlos visto y los errores
+  saltarán solo en el commit (cuando pre-commit los reciba vía stash). Demo: un módulo
+  nuevo untracked puede pasar `invoke lint` limpio y luego romper el hook mandatory
+  `pylint_odoo` (p.ej. `W8113 attribute-string-redundant`) al commitear.
 - Hooks de pre-commit (`.pre-commit-config.yaml`): OCA `oca-checks-odoo-module` +
   `oca-checks-po`, `ruff --fix`, `ruff-format`, `prettier` con `@prettier/plugin-xml`
   (para que el XML se reformatee), `pylint_odoo` (rcfile obligatorio
