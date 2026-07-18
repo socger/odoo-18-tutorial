@@ -42,6 +42,13 @@
             <search string="Concepts by Vehicle Type">
                 <field name="vehicle_type_id" />
                 <field name="concept_cost_budget_sale_id" />
+                <group expand="0" string="Group By">
+                    <filter
+                        name="group_vehicle_type"
+                        string="Tipo de vehículo"
+                        context="{'group_by': 'vehicle_type_id'}"
+                    />
+                </group>
             </search>
         </field>
     </record>
