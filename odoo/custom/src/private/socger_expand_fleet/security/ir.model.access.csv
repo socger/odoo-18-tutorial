@@ -1,3 +1,9 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_vehicle_type_user,vehicle.type.user,model_vehicle_type,fleet.fleet_group_user,1,0,0,0
 access_vehicle_type_manager,vehicle.type.manager,model_vehicle_type,fleet.fleet_group_manager,1,1,1,1
+access_concept_cost_budget_sale_family_user,concept.cost.budget.sale.family.user,model_concept_cost_budget_sale_family,fleet.fleet_group_user,1,0,0,0
+access_concept_cost_budget_sale_family_manager,concept.cost.budget.sale.family.manager,model_concept_cost_budget_sale_family,fleet.fleet_group_manager,1,1,1,1
+access_concept_cost_budget_sale_user,concept.cost.budget.sale.user,model_concept_cost_budget_sale,fleet.fleet_group_user,1,0,0,0
+access_concept_cost_budget_sale_manager,concept.cost.budget.sale.manager,model_concept_cost_budget_sale,fleet.fleet_group_manager,1,1,1,1
+access_concept_cost_budget_sale_by_vehicle_type_user,concept.cost.budget.sale.by.vehicle.type.user,model_concept_cost_budget_sale_by_vehicle_type,fleet.fleet_group_user,1,0,0,0
+access_concept_cost_budget_sale_by_vehicle_type_manager,concept.cost.budget.sale.by.vehicle.type.manager,model_concept_cost_budget_sale_by_vehicle_type,fleet.fleet_group_manager,1,1,1,1

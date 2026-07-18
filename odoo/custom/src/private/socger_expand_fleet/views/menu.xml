@@ -8,4 +8,36 @@
         sequence="0"
         groups="fleet.fleet_group_manager"
     />
+
+    <menuitem
+        id="menu_fleet_concept_cost_budget_sale"
+        name="Conceptos para control de costes, presupuestos ó ventas"
+        parent="fleet.fleet_configuration"
+        sequence="15"
+        groups="fleet.fleet_group_manager"
+    />
+
+    <menuitem
+        id="menu_concept_cost_budget_sale_family"
+        name="Familia de conceptos"
+        parent="menu_fleet_concept_cost_budget_sale"
+        action="action_concept_cost_budget_sale_family"
+        sequence="1"
+    />
+
+    <menuitem
+        id="menu_concept_cost_budget_sale"
+        name="Conceptos"
+        parent="menu_fleet_concept_cost_budget_sale"
+        action="action_concept_cost_budget_sale"
+        sequence="5"
+    />
+
+    <menuitem
+        id="menu_concept_cost_budget_sale_by_vehicle_type"
+        name="Conceptos por tipo de vehículo"
+        parent="menu_fleet_concept_cost_budget_sale"
+        action="action_concept_cost_budget_sale_by_vehicle_type"
+        sequence="10"
+    />
 </odoo>

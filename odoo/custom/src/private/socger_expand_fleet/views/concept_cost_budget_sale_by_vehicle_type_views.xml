@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_concept_cost_budget_sale_by_vehicle_type_list" model="ir.ui.view">
+        <field name="name">concept.cost.budget.sale.by.vehicle.type.list</field>
+        <field name="model">concept.cost.budget.sale.by.vehicle.type</field>
+        <field name="arch" type="xml">
+            <list string="Concepts by Vehicle Type">
+                <field name="vehicle_type_id" />
+                <field name="concept_cost_budget_sale_id" />
+                <field name="value" />
+            </list>
+        </field>
+    </record>
+
+    <record id="view_concept_cost_budget_sale_by_vehicle_type_form" model="ir.ui.view">
+        <field name="name">concept.cost.budget.sale.by.vehicle.type.form</field>
+        <field name="model">concept.cost.budget.sale.by.vehicle.type</field>
+        <field name="arch" type="xml">
+            <form string="Concept by Vehicle Type">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="vehicle_type_id" />
+                            <field name="concept_cost_budget_sale_id" />
+                            <field name="value" />
+                            <field name="price_guide" />
+                            <field name="description" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record
+        id="view_concept_cost_budget_sale_by_vehicle_type_search"
+        model="ir.ui.view"
+    >
+        <field name="name">concept.cost.budget.sale.by.vehicle.type.search</field>
+        <field name="model">concept.cost.budget.sale.by.vehicle.type</field>
+        <field name="arch" type="xml">
+            <search string="Concepts by Vehicle Type">
+                <field name="vehicle_type_id" />
+                <field name="concept_cost_budget_sale_id" />
+            </search>
+        </field>
+    </record>
+
+    <record
+        id="action_concept_cost_budget_sale_by_vehicle_type"
+        model="ir.actions.act_window"
+    >
+        <field name="name">Conceptos por tipo de vehículo</field>
+        <field name="res_model">concept.cost.budget.sale.by.vehicle.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new concept by vehicle type
+            </p>
+        </field>
+    </record>
+</odoo>
