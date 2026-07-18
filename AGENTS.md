@@ -34,6 +34,15 @@ Doodba.
 - El skill `odoo-development` (guía general) puede cargarse adicionalmente para
   refrescar principios ORM/vistas, pero el **canónico es `odoo-development-skill`** por
   seguir estándares OCA estrictos y cubrir versiones 14–19.
+- **Prioridad del skill sobre el estilo de archivos existentes**: cuando una
+  recomendación del skill `odoo-development-skill` (p.ej. type hints en fields para Odoo
+  18, `@tagged('post_install', '-at_install')` en tests, `index='btree'` en vez de
+  `index=True`, `_check_company_auto`/`check_company` en modelos multi-compañía, `SQL()`
+  builder para raw SQL, etc.) difiera del estilo de los archivos ya existentes en el
+  repo, **el skill tiene prioridad**. Los ficheros nuevos se alinean al skill; si se
+  desea homogeneizar los existentes, se migran en un commit separado. La regla genérica
+  "mimic existing code style" NO aplica por encima del skill en tareas de desarrollo
+  Odoo.
 
 ## Stack y estructura
 
