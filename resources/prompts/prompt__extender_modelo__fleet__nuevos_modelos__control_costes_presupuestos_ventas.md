@@ -23,13 +23,13 @@ Debes de añadir los siguientes modelos:
 - concept_cost_budget_sale
 
   - Fields:
-    - field: concept_cost_budget_sale_family_id type: Many2one con tabla
+    - field: concept_cost_budget_sale_family_id, type: Many2one con tabla
       concept_cost_budget_sale_family required: Si
-    - field: connamecept_cost_budget_sale_family_id type: Char required: Si
-    - field: description type: Char required: No
-    - field: to_cost type: Boolean, por defecto = false required: No
-    - field: to_budget type: Boolean, por defecto = false required: No
-    - field: to_sale type: Boolean, por defecto = false required: No
+    - field: name, type: Char required: Si
+    - field: description, type: Char required: No
+    - field: to_cost, type: Boolean, por defecto = false required: No
+    - field: to_budget, type: Boolean, por defecto = false required: No
+    - field: to_sale, type: Boolean, por defecto = false required: No
   - Crear los siguientes índices:
     - Por field "name" Indice único: No
     - Por los fields "concept_cost_budget_sale_family_id" + "name" Indice único: Si
