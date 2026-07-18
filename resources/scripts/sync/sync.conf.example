@@ -1,0 +1,23 @@
+# sync.conf.example — copia este fichero a sync.conf y rellena tus valores.
+#   cp sync.conf.example sync.conf
+#
+# sync.conf es cargado por sync.sh (mismo directorio) y NO se commitea
+# (ya está en .gitignore). Cualquier variable de entorno ya exportada al
+# ejecutar sync.sh tiene PRIORIDAD sobre los valores de este fichero.
+
+# Usuario SSH del servidor remoto.
+REMOTE_USER="usuario"
+
+# Host o IP del servidor remoto.
+REMOTE_HOST="servidor.example.com"
+
+# Puerto SSH (22 por defecto).
+REMOTE_PORT="22"
+
+# Ruta absoluta en el servidor remoto que recibirá/contendrá el proyecto.
+# Se normaliza con barra final automáticamente.
+REMOTE_PATH="/home/usuario/proyectos/tutorial"
+
+# Identidad SSH privada a usar (opcional). Si la dejas vacía se usará el
+# agente SSH o la configuración por defecto de ~/.ssh/config.
+SSH_IDENTITY=""
