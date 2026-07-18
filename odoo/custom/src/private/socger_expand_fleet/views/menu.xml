@@ -5,7 +5,7 @@
         name="Tipos de vehículo"
         parent="fleet.fleet_models_configuration"
         action="action_fleet_vehicle_type"
-        sequence="15"
+        sequence="0"
         groups="fleet.fleet_group_manager"
     />
 </odoo>
