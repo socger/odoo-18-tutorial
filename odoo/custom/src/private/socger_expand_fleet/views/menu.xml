@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <menuitem
+        id="menu_fleet_vehicle_type"
+        name="Tipos de vehículo"
+        parent="fleet.fleet_models_configuration"
+        action="action_fleet_vehicle_type"
+        sequence="15"
+        groups="fleet.fleet_group_manager"
+    />
+</odoo>
