@@ -1,0 +1,2 @@
+- Comprobar si funcionan los módulos creados para socger_extend_fleet
+- Crear script para rellenar estas tablas nuevas
