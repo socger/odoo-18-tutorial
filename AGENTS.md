@@ -72,11 +72,11 @@ Todas las tareas están definidas en `tasks.py` y se ejecutan vía `invoke <task
 - `invoke stop [--purge]` — detener (y opcionalmente purgar contenedores/redes).
 - `invoke restart` — reiniciar el/los contenedor(es) de odoo.
 - `invoke logs [--tail N] [--no-follow] [--container NAME]` — ver el tail de logs.
-- `invoke install [-w socger_hospital]` — instalar un módulo (o
+- `invoke install [-m socger_hospital]` — instalar un módulo (o
   `--private`/`--core`/`--extra`/`--enterprise`). Sin args, infiere el addon desde el
   CWD.
-- `invoke test [-w socger_hospital] [--init ...]` — ejecutar los tests de Odoo en la BD
-  `devel`. Ver `tasks.py:1005` para el set completo de flags.
+- `invoke test [-m socger_hospital] [--mode init|update]` — ejecutar los tests de Odoo
+  en la BD `devel`. Ver `tasks.py:1005` para el set completo de flags.
 - `invoke resetdb` — dropear y recrear la BD `devel` con un conjunto de módulos.
 - `invoke lint` — ejecutar `pre-commit run --all-files` (este es el paso canónico de
   lint/format).
