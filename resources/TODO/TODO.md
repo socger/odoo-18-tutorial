@@ -1,2 +1,6 @@
-- Comprobar si funcionan los módulos creados para socger_extend_fleet
-- Crear script para rellenar estas tablas nuevas
+- Comprobar si funcionan los módulos creados para socger_extend_fleet Hay nombres de
+  field que deben de arreglarse en las vistas Hay que probar el funcionamiento, altas
+  bajas cambios ... de todos los módulos creados.
+
+- Crear script para rellenar estas tablas nuevas Faltan los scripts de características
+  de vehículos
