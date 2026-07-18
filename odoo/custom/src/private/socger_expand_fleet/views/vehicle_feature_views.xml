@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_vehicle_feature_list" model="ir.ui.view">
+        <field name="name">vehicle.feature.list</field>
+        <field name="model">vehicle.feature</field>
+        <field name="arch" type="xml">
+            <list string="Vehicle Features">
+                <field name="vehicle_feature_category_id" />
+                <field name="name" />
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vehicle_feature_form" model="ir.ui.view">
+        <field name="name">vehicle.feature.form</field>
+        <field name="model">vehicle.feature</field>
+        <field name="arch" type="xml">
+            <form string="Vehicle Feature">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="vehicle_feature_category_id" />
+                            <field name="name" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_vehicle_feature_search" model="ir.ui.view">
+        <field name="name">vehicle.feature.search</field>
+        <field name="model">vehicle.feature</field>
+        <field name="arch" type="xml">
+            <search string="Vehicle Features">
+                <field name="vehicle_feature_category_id" />
+                <field name="name" />
+            </search>
+        </field>
+    </record>
+
+    <record id="action_vehicle_feature" model="ir.actions.act_window">
+        <field name="name">Características</field>
+        <field name="res_model">vehicle.feature</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new vehicle feature
+            </p>
+        </field>
+    </record>
+</odoo>

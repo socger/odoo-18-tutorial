@@ -7,3 +7,9 @@ access_concept_cost_budget_sale_user,concept.cost.budget.sale.user,model_concept
 access_concept_cost_budget_sale_manager,concept.cost.budget.sale.manager,model_concept_cost_budget_sale,fleet.fleet_group_manager,1,1,1,1
 access_concept_cost_budget_sale_by_vehicle_type_user,concept.cost.budget.sale.by.vehicle.type.user,model_concept_cost_budget_sale_by_vehicle_type,fleet.fleet_group_user,1,0,0,0
 access_concept_cost_budget_sale_by_vehicle_type_manager,concept.cost.budget.sale.by.vehicle.type.manager,model_concept_cost_budget_sale_by_vehicle_type,fleet.fleet_group_manager,1,1,1,1
+access_vehicle_feature_category_user,vehicle.feature.category.user,model_vehicle_feature_category,fleet.fleet_group_user,1,0,0,0
+access_vehicle_feature_category_manager,vehicle.feature.category.manager,model_vehicle_feature_category,fleet.fleet_group_manager,1,1,1,1
+access_vehicle_feature_user,vehicle.feature.user,model_vehicle_feature,fleet.fleet_group_user,1,0,0,0
+access_vehicle_feature_manager,vehicle.feature.manager,model_vehicle_feature,fleet.fleet_group_manager,1,1,1,1
+access_vehicle_feature_by_vehicle_user,vehicle.feature.by.vehicle.user,model_vehicle_feature_by_vehicle,fleet.fleet_group_user,1,1,0,0
+access_vehicle_feature_by_vehicle_manager,vehicle.feature.by.vehicle.manager,model_vehicle_feature_by_vehicle,fleet.fleet_group_manager,1,1,1,1

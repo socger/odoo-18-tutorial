@@ -40,4 +40,37 @@
         action="action_concept_cost_budget_sale_by_vehicle_type"
         sequence="10"
     />
+
+    <menuitem
+        id="menu_fleet_vehicle_features_configuration"
+        name="Características de vehículos"
+        parent="fleet.fleet_configuration"
+        sequence="15"
+        groups="fleet.fleet_group_manager"
+    />
+
+    <menuitem
+        id="menu_vehicle_feature_category"
+        name="Familia de características"
+        parent="menu_fleet_vehicle_features_configuration"
+        action="action_vehicle_feature_category"
+        sequence="1"
+    />
+
+    <menuitem
+        id="menu_vehicle_feature"
+        name="Características"
+        parent="menu_fleet_vehicle_features_configuration"
+        action="action_vehicle_feature"
+        sequence="5"
+    />
+
+    <menuitem
+        id="menu_vehicle_feature_by_vehicle"
+        name="Características por vehículo"
+        parent="fleet.fleet_vehicles"
+        action="action_vehicle_feature_by_vehicle"
+        sequence="1"
+        groups="fleet.fleet_group_user"
+    />
 </odoo>

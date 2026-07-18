@@ -1,7 +1,7 @@
 {
     "name": "Socger Expand Fleet",
     "summary": "Extensiones de la flota de vehículos",
-    "version": "18.0.0.2.0",
+    "version": "18.0.0.3.0",
     "category": "Human Resources/Fleet",
     "website": "https://www.galvintec.com",
     "author": "Galvintec",
@@ -13,6 +13,9 @@
         "views/concept_cost_budget_sale_family_views.xml",
         "views/concept_cost_budget_sale_views.xml",
         "views/concept_cost_budget_sale_by_vehicle_type_views.xml",
+        "views/vehicle_feature_category_views.xml",
+        "views/vehicle_feature_views.xml",
+        "views/vehicle_feature_by_vehicle_views.xml",
         "views/menu.xml",
     ],
     "installable": True,

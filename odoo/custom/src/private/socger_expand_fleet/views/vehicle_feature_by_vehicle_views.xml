@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_vehicle_feature_by_vehicle_list" model="ir.ui.view">
+        <field name="name">vehicle.feature.by.vehicle.list</field>
+        <field name="model">vehicle.feature.by.vehicle</field>
+        <field name="arch" type="xml">
+            <list string="Vehicle Features by Vehicle">
+                <field name="fleet_vehicle_id" />
+                <field name="vehicle_feature_id" />
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vehicle_feature_by_vehicle_form" model="ir.ui.view">
+        <field name="name">vehicle.feature.by.vehicle.form</field>
+        <field name="model">vehicle.feature.by.vehicle</field>
+        <field name="arch" type="xml">
+            <form string="Vehicle Feature by Vehicle">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="fleet_vehicle_id" />
+                            <field name="vehicle_feature_id" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_vehicle_feature_by_vehicle_search" model="ir.ui.view">
+        <field name="name">vehicle.feature.by.vehicle.search</field>
+        <field name="model">vehicle.feature.by.vehicle</field>
+        <field name="arch" type="xml">
+            <search string="Vehicle Features by Vehicle">
+                <field name="fleet_vehicle_id" />
+                <field name="vehicle_feature_id" />
+                <group expand="0" string="Group By">
+                    <filter
+                        name="groupby_fleet_vehicle"
+                        string="Vehicle"
+                        context="{'group_by': 'fleet_vehicle_id'}"
+                    />
+                    <filter
+                        name="groupby_vehicle_feature"
+                        string="Feature"
+                        context="{'group_by': 'vehicle_feature_id'}"
+                    />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_vehicle_feature_by_vehicle" model="ir.actions.act_window">
+        <field name="name">Características por vehículo</field>
+        <field name="res_model">vehicle.feature.by.vehicle</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new vehicle feature by vehicle
+            </p>
+        </field>
+    </record>
+</odoo>
