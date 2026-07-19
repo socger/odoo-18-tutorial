@@ -1,10 +1,10 @@
 {
     "name": "Socger Expand Fleet",
-    "summary": "Extensiones de la flota de vehículos",
+    "summary": "Gestión que expandela flota de vehículos",
     "version": "18.0.0.3.0",
     "category": "Human Resources/Fleet",
-    "website": "https://www.galvintec.com",
-    "author": "Galvintec",
+    "website": "https://cuidamet.duckdns.org/",
+    "author": "SocGer",
     "license": "LGPL-3",
     "depends": ["fleet"],
     "data": [
