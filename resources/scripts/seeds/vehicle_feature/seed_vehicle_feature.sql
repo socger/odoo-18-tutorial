@@ -21,16 +21,6 @@
 
 SET client_encoding TO 'UTF8';
 
--- The model declares UNIQUE(vehicle_feature_category_id, name) via
--- _sql_constraints, but Odoo fails to create the constraint at module update
--- time because the auto-generated constraint name
--- "vehicle_feature_category_name_unique" collides with the index backing the
--- UNIQUE constraint on vehicle_feature_category.name (index names are
--- schema-scoped in PostgreSQL). Create the unique index here with a
--- non-colliding name so ON CONFLICT can use it. Idempotent via IF NOT EXISTS.
-CREATE UNIQUE INDEX IF NOT EXISTS vehicle_feature_cat_name_uniq_idx
-    ON vehicle_feature (vehicle_feature_category_id, name);
-
 INSERT INTO vehicle_feature
     (vehicle_feature_category_id, name, create_uid, write_uid, create_date, write_date)
 VALUES

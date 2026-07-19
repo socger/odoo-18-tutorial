@@ -15,7 +15,7 @@ class VehicleFeature(models.Model):
 
     _sql_constraints = [
         (
-            "category_name_unique",
+            "feature_cat_name_unique",
             "UNIQUE(vehicle_feature_category_id, name)",
             "The feature name must be unique per category.",
         ),
