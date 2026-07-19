@@ -19,7 +19,7 @@
 
     <menuitem
         id="menu_concept_cost_budget_sale_family"
-        name="Familia de conceptos"
+        name="Categorías"
         parent="menu_fleet_concept_cost_budget_sale"
         action="action_concept_cost_budget_sale_family"
         sequence="1"
@@ -51,7 +51,7 @@
 
     <menuitem
         id="menu_vehicle_feature_category"
-        name="Familia de características"
+        name="Categorías"
         parent="menu_fleet_vehicle_features_configuration"
         action="action_vehicle_feature_category"
         sequence="1"

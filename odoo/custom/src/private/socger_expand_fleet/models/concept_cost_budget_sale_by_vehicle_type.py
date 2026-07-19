@@ -6,20 +6,22 @@ class ConceptCostBudgetSaleByVehicleType(models.Model):
     _description = "Concept Cost Budget Sale By Vehicle Type"
 
     vehicle_type_id = fields.Many2one(
+        string="Tipo de vehículo",
         comodel_name="vehicle.type",
         required=True,
         ondelete="restrict",
         index=True,
     )
     concept_cost_budget_sale_id = fields.Many2one(
+        string="Concepto",
         comodel_name="concept.cost.budget.sale",
         required=True,
         ondelete="restrict",
         index=True,
     )
-    value = fields.Float(required=True)
-    price_guide = fields.Char()
-    description = fields.Char()
+    value = fields.Float(string="Valor", required=True)
+    price_guide = fields.Char(string="Guía de precios")
+    description = fields.Char(string="Descripción")
 
     _sql_constraints = [
         (

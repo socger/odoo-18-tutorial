@@ -6,12 +6,13 @@ class VehicleFeature(models.Model):
     _description = "Vehicle Feature"
 
     vehicle_feature_category_id: int = fields.Many2one(
+        string="Categoría",
         comodel_name="vehicle.feature.category",
         required=True,
         ondelete="restrict",
         index="btree",
     )
-    name: str = fields.Char(required=True, index="btree")
+    name: str = fields.Char(string="Característica", required=True, index="btree")
 
     _sql_constraints = [
         (

@@ -7,16 +7,17 @@ class ConceptCostBudgetSale(models.Model):
     _description = "Concept Cost Budget Sale"
 
     concept_cost_budget_sale_family_id = fields.Many2one(
+        string="Categoría",
         comodel_name="concept.cost.budget.sale.family",
         required=True,
         ondelete="restrict",
         index=True,
     )
-    name = fields.Char(required=True, index=True)
-    description = fields.Char()
-    to_cost = fields.Boolean(default=False)
-    to_budget = fields.Boolean(default=False)
-    to_sale = fields.Boolean(default=False)
+    name = fields.Char(string="Concepto", required=True, index=True)
+    description = fields.Char(string="Descripción", required=False)
+    to_cost = fields.Boolean(string="Para costes", default=False)
+    to_budget = fields.Boolean(string="Para presupuestos", default=False)
+    to_sale = fields.Boolean(string="Para ventas", default=False)
 
     _sql_constraints = [
         (
