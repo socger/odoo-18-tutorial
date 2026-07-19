@@ -1,0 +1,12 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "odoo-dev",
+  "permission": {
+    "edit": {
+      "*": "allow",
+      "odoo/custom/src/private/**": "ask",
+      "odoo/custom/src/oca/**": "ask",
+      "odoo/custom/src/odoo/**": "ask"
+    }
+  }
+}
