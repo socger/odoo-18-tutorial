@@ -37,3 +37,30 @@ class ConceptCostBudgetSale(models.Model):
                         "selected: to_cost, to_budget or to_sale."
                     )
                 )
+
+    @api.depends("concept_cost_budget_sale_family_id.name", "name")
+    def _compute_display_name(self) -> None:
+        """Display name as 'family name - concept name'."""
+        for record in self:
+            family_name = record.concept_cost_budget_sale_family_id.name or ""
+            parts = [p for p in (family_name, record.name or "") if p]
+            record.display_name = " - ".join(parts)
+
+    @api.model
+    def _name_search(
+        self,
+        name: str = "",
+        domain=None,
+        operator: str = "ilike",
+        limit: int = 100,
+        order=None,
+    ):
+        """Search by concept name or by family name."""
+        domain = domain or []
+        if name:
+            domain = [
+                "|",
+                ("name", operator, name),
+                ("concept_cost_budget_sale_family_id.name", operator, name),
+            ] + domain
+        return self._search(domain, limit=limit, order=order)

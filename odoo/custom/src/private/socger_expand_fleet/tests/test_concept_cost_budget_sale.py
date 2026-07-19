@@ -58,3 +58,13 @@ class TestConceptCostBudgetSale(TransactionCase):
                     "to_budget": True,
                 }
             )
+
+    def test_display_name_concatenates_family_and_name(self):
+        concept = self.env["concept.cost.budget.sale"].create(
+            {
+                "concept_cost_budget_sale_family_id": self.family.id,
+                "name": "Gasoline",
+                "to_cost": True,
+            }
+        )
+        self.assertEqual(concept.display_name, "Fuel - Gasoline")
