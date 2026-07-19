@@ -1,10 +1,11 @@
 import psycopg2
 
 from odoo.exceptions import ValidationError
-from odoo.tests.common import TransactionCase
+from odoo.tests import TransactionCase, tagged
 from odoo.tools import mute_logger
 
 
+@tagged("post_install", "-at_install")
 class TestConceptCostBudgetSale(TransactionCase):
     @classmethod
     def setUpClass(cls):
