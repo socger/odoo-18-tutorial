@@ -40,7 +40,7 @@
     </record>
 
     <record id="action_vehicle_feature_category" model="ir.actions.act_window">
-        <field name="name">Familia de características</field>
+        <field name="name">Familias - Características de vehículos</field>
         <field name="res_model">vehicle.feature.category</field>
         <field name="view_mode">list,form</field>
         <field name="help" type="html">

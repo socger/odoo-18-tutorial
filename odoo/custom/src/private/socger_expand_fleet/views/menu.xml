@@ -67,7 +67,7 @@
 
     <menuitem
         id="menu_vehicle_feature_by_vehicle"
-        name="Características por vehículo"
+        name="Flota - Características por vehículo"
         parent="fleet.fleet_vehicles"
         action="action_vehicle_feature_by_vehicle"
         sequence="1"
