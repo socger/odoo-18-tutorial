@@ -57,7 +57,9 @@
         id="action_concept_cost_budget_sale_by_vehicle_type"
         model="ir.actions.act_window"
     >
-        <field name="name">Conceptos por tipo de vehículo</field>
+        <field
+            name="name"
+        >Por tipo vehículo - Conceptos de control de costes, presupuestos ó ventas</field>
         <field name="res_model">concept.cost.budget.sale.by.vehicle.type</field>
         <field name="view_mode">list,form</field>
         <field name="help" type="html">

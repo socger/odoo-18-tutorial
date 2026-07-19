@@ -11,7 +11,7 @@
 
     <menuitem
         id="menu_fleet_concept_cost_budget_sale"
-        name="Conceptos para control de costes, presupuestos ó ventas"
+        name="Conceptos de control de costes, presupuestos ó ventas"
         parent="fleet.fleet_configuration"
         sequence="15"
         groups="fleet.fleet_group_manager"
