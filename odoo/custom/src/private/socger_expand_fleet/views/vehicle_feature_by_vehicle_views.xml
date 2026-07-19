@@ -5,8 +5,8 @@
         <field name="model">vehicle.feature.by.vehicle</field>
         <field name="arch" type="xml">
             <list string="Vehicle Features by Vehicle">
-                <field name="fleet_vehicle_id" />
-                <field name="vehicle_feature_id" />
+                <field name="fleet_vehicle_id" string="Vehículo" />
+                <field name="vehicle_feature_id" string="Características" />
             </list>
         </field>
     </record>
@@ -19,8 +19,8 @@
                 <sheet>
                     <group>
                         <group>
-                            <field name="fleet_vehicle_id" />
-                            <field name="vehicle_feature_id" />
+                            <field name="fleet_vehicle_id" string="Vehículo" />
+                            <field name="vehicle_feature_id" string="Características" />
                         </group>
                     </group>
                 </sheet>
@@ -38,12 +38,12 @@
                 <group expand="0" string="Group By">
                     <filter
                         name="groupby_fleet_vehicle"
-                        string="Vehicle"
+                        string="Vehículo"
                         context="{'group_by': 'fleet_vehicle_id'}"
                     />
                     <filter
                         name="groupby_vehicle_feature"
-                        string="Feature"
+                        string="Característica"
                         context="{'group_by': 'vehicle_feature_id'}"
                     />
                 </group>

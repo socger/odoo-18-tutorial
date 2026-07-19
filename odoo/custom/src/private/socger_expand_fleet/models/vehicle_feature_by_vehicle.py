@@ -7,12 +7,14 @@ class VehicleFeatureByVehicle(models.Model):
 
     fleet_vehicle_id: int = fields.Many2one(
         comodel_name="fleet.vehicle",
+        string="Vehículo",
         required=True,
         ondelete="restrict",
         index="btree",
     )
     vehicle_feature_id: int = fields.Many2one(
         comodel_name="vehicle.feature",
+        string="Características",
         required=True,
         ondelete="restrict",
         index="btree",
