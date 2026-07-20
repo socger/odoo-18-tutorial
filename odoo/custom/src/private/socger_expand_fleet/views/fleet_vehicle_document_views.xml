@@ -54,7 +54,19 @@
                             <field name="res_id" invisible="1" />
                             <field name="file_size" readonly="1" />
                             <field name="mimetype" readonly="1" />
+                            <!-- Fields required by the attachment_preview_field
+                                 widget (kept invisible). -->
+                            <field name="access_token" invisible="1" />
+                            <field name="checksum" invisible="1" />
                         </group>
+                    </group>
+                    <group string="Previsualización" colspan="4">
+                        <field
+                            name="id"
+                            widget="attachment_preview_field"
+                            nolabel="1"
+                            colspan="2"
+                        />
                     </group>
                     <group string="Descripción" colspan="4">
                         <field name="description" nolabel="1" />

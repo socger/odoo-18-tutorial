@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+
+    <t t-name="socger_expand_fleet.AttachmentPreview">
+        <div
+            class="o_socger_attachment_preview d-flex flex-column align-items-center justify-content-center text-center"
+            t-att-class="{ 'o_viewable cursor-pointer': isViewable }"
+            t-on-click="onClickPreview"
+        >
+            <t t-if="!file">
+                <div class="text-muted p-3">
+                    <i class="fa fa-paperclip fa-2x mb-2" />
+                    <p class="small mb-0">Sin documento para previsualizar</p>
+                </div>
+            </t>
+
+            <t t-elif="isImage">
+                <div class="o_socger_attachment_image mb-2">
+                    <img
+                        class="img img-fluid rounded"
+                        t-att-src="imageUrl"
+                        t-att-alt="displayName"
+                    />
+                </div>
+                <p
+                    class="small text-muted mb-0 text-truncate w-100"
+                    t-esc="displayName"
+                />
+            </t>
+
+            <t t-elif="isPdf">
+                <div class="o_socger_attachment_icon o_socger_attachment_pdf mb-2">
+                    <i class="fa fa-file-pdf-o fa-3x text-danger" />
+                </div>
+                <p
+                    class="small text-muted mb-0 text-truncate w-100"
+                    t-esc="displayName"
+                />
+                <p class="small text-primary mb-0">Pulsar para visualizar</p>
+            </t>
+
+            <t t-elif="isViewable">
+                <div class="o_socger_attachment_icon mb-2">
+                    <i class="fa fa-file-o fa-3x text-muted" />
+                </div>
+                <p
+                    class="small text-muted mb-0 text-truncate w-100"
+                    t-esc="displayName"
+                />
+                <p class="small text-primary mb-0">Pulsar para visualizar</p>
+            </t>
+
+            <t t-else="">
+                <div class="o_socger_attachment_icon mb-2">
+                    <i class="fa fa-file-o fa-3x text-muted" />
+                </div>
+                <p
+                    class="small text-muted mb-0 text-truncate w-100"
+                    t-esc="displayName"
+                />
+                <p class="small fw-bold mb-0" t-esc="extension" />
+                <a
+                    class="btn btn-sm btn-secondary mt-2"
+                    t-att-href="downloadUrl"
+                    download=""
+                >
+                    <i class="fa fa-download" /> Descargar
+                </a>
+            </t>
+        </div>
+    </t>
+
+</templates>
