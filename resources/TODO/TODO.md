@@ -4,3 +4,6 @@
 
 - Crear script para rellenar estas tablas nuevas Faltan los scripts de características
   de vehículos
+
+La vista form y list que he creado para los documentos de vehículos ver si filtran por
+vehículo y si agrupan también.
