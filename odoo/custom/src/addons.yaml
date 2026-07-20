@@ -2,6 +2,8 @@ oca/bank-payment:
   - "*"
 oca/community-data-files:
   - "*"
+oca/knowledge:
+  - "*"
 oca/l10n-spain:
   - "*"
 oca/web:
