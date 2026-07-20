@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!-- LIST view: all documents associated to fleet vehicles.
+         Ordered by vehicle + attachment name. -->
+    <record id="view_fleet_vehicle_document_list" model="ir.ui.view">
+        <field name="name">ir.attachment.fleet.vehicle.document.list</field>
+        <field name="model">ir.attachment</field>
+        <field name="arch" type="xml">
+            <list
+                string="Documentos de vehículos"
+                default_order="fleet_vehicle_id, name"
+            >
+                <field name="fleet_vehicle_id" string="Vehículo" />
+                <field name="name" string="Documento" />
+                <field name="file_size" string="Tamaño" />
+                <field name="mimetype" string="Tipo" />
+                <field name="create_uid" string="Subido por" />
+                <field name="create_date" string="Fecha de subida" />
+            </list>
+        </field>
+    </record>
+
+    <!-- FORM view: add new documents and link them to a vehicle. -->
+    <record id="view_fleet_vehicle_document_form" model="ir.ui.view">
+        <field name="name">ir.attachment.fleet.vehicle.document.form</field>
+        <field name="model">ir.attachment</field>
+        <field name="arch" type="xml">
+            <form string="Documento de vehículo">
+                <sheet>
+                    <group>
+                        <group string="Vínculo">
+                            <field
+                                name="fleet_vehicle_id"
+                                string="Vehículo"
+                                required="1"
+                            />
+                            <field name="type" invisible="1" />
+                            <field name="res_model" invisible="1" />
+                            <field name="res_id" invisible="1" />
+                        </group>
+                        <group string="Documento">
+                            <field name="name" string="Nombre del documento" />
+                            <field name="datas" string="Archivo" filename="name" />
+                            <field name="url" widget="url" invisible="type != 'url'" />
+                            <field name="file_size" readonly="1" />
+                            <field name="mimetype" readonly="1" />
+                        </group>
+                    </group>
+                    <group string="Descripción" colspan="4">
+                        <field name="description" nolabel="1" />
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- SEARCH view: filter by vehicle + group by vehicle. -->
+    <record id="view_fleet_vehicle_document_search" model="ir.ui.view">
+        <field name="name">ir.attachment.fleet.vehicle.document.search</field>
+        <field name="model">ir.attachment</field>
+        <field name="arch" type="xml">
+            <search string="Documentos de vehículos">
+                <field
+                    name="name"
+                    filter_domain="[('name', 'ilike', self)]"
+                    string="Documento"
+                />
+                <field name="fleet_vehicle_id" string="Vehículo" />
+                <separator />
+                <filter
+                    name="filter_binary"
+                    string="Archivo"
+                    domain="[('type', '=', 'binary')]"
+                />
+                <filter
+                    name="filter_url"
+                    string="URL"
+                    domain="[('type', '=', 'url')]"
+                />
+                <separator />
+                <filter
+                    name="filter_my_documents"
+                    string="Mis documentos"
+                    domain="[('create_uid', '=', uid)]"
+                />
+                <group expand="0" string="Group By">
+                    <filter
+                        name="groupby_fleet_vehicle"
+                        string="Vehículo"
+                        context="{'group_by': 'fleet_vehicle_id'}"
+                    />
+                    <filter
+                        name="groupby_create_date"
+                        string="Fecha de subida"
+                        context="{'group_by': 'create_date:month'}"
+                    />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACTION: only vehicle attachments, excluding field-stored binaries. -->
+    <record id="action_fleet_vehicle_document" model="ir.actions.act_window">
+        <field name="name">Flota - Documentación</field>
+        <field name="res_model">ir.attachment</field>
+        <field name="view_mode">list,form</field>
+        <field
+            name="domain"
+        >[('res_model', '=', 'fleet.vehicle'), ('res_field', '=', False)]</field>
+        <field
+            name="context"
+        >{'default_res_model': 'fleet.vehicle', 'default_type': 'binary'}</field>
+        <field name="search_view_id" ref="view_fleet_vehicle_document_search" />
+        <field
+            name="views"
+            eval="[(ref('view_fleet_vehicle_document_list'), 'list'), (ref('view_fleet_vehicle_document_form'), 'form')]"
+        />
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Sube el primer documento de un vehículo
+            </p>
+            <p>
+                Aquí podrás ver y subir documentos asociados a vehículos de la flota.
+            </p>
+        </field>
+    </record>
+</odoo>
