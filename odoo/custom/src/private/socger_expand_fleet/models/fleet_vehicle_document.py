@@ -23,6 +23,7 @@ class IrAttachment(models.Model):
         inverse="_inverse_fleet_vehicle_id",
         store=True,
         index="btree",
+        readonly=False,
         ondelete="restrict",
     )
 

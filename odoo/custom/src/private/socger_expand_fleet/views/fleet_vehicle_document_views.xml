@@ -20,28 +20,38 @@
         </field>
     </record>
 
-    <!-- FORM view: add new documents and link them to a vehicle. -->
+    <!-- FORM view: add new documents and link them to a vehicle.
+         The vehicle is the first (title) field, so the user is explicitly
+         asked which vehicle the document belongs to. -->
     <record id="view_fleet_vehicle_document_form" model="ir.ui.view">
         <field name="name">ir.attachment.fleet.vehicle.document.form</field>
         <field name="model">ir.attachment</field>
         <field name="arch" type="xml">
             <form string="Documento de vehículo">
                 <sheet>
-                    <group>
-                        <group string="Vínculo">
+                    <div class="oe_title">
+                        <label for="fleet_vehicle_id" string="Vehículo" />
+                        <h1>
                             <field
                                 name="fleet_vehicle_id"
                                 string="Vehículo"
                                 required="1"
+                                readonly="0"
+                                options="{'no_create': True}"
+                                placeholder="Seleccione el vehículo al que asociar el documento..."
                             />
-                            <field name="type" invisible="1" />
-                            <field name="res_model" invisible="1" />
-                            <field name="res_id" invisible="1" />
-                        </group>
+                        </h1>
+                    </div>
+                    <group>
                         <group string="Documento">
                             <field name="name" string="Nombre del documento" />
                             <field name="datas" string="Archivo" filename="name" />
                             <field name="url" widget="url" invisible="type != 'url'" />
+                        </group>
+                        <group string="Detalles">
+                            <field name="type" invisible="1" />
+                            <field name="res_model" invisible="1" />
+                            <field name="res_id" invisible="1" />
                             <field name="file_size" readonly="1" />
                             <field name="mimetype" readonly="1" />
                         </group>
@@ -99,7 +109,10 @@
         </field>
     </record>
 
-    <!-- ACTION: only vehicle attachments, excluding field-stored binaries. -->
+    <!-- ACTION: only vehicle attachments, excluding field-stored binaries.
+         The specific list/form views are bound via explicit ir.act_window.view
+         records below, which is the reliable canonical pattern (the `views`
+         eval with ref() does not always resolve at load time). -->
     <record id="action_fleet_vehicle_document" model="ir.actions.act_window">
         <field name="name">Flota - Documentación</field>
         <field name="res_model">ir.attachment</field>
@@ -111,10 +124,6 @@
             name="context"
         >{'default_res_model': 'fleet.vehicle', 'default_type': 'binary'}</field>
         <field name="search_view_id" ref="view_fleet_vehicle_document_search" />
-        <field
-            name="views"
-            eval="[(ref('view_fleet_vehicle_document_list'), 'list'), (ref('view_fleet_vehicle_document_form'), 'form')]"
-        />
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Sube el primer documento de un vehículo
@@ -123,5 +132,27 @@
                 Aquí podrás ver y subir documentos asociados a vehículos de la flota.
             </p>
         </field>
+    </record>
+
+    <!-- Bind the list view to the action. -->
+    <record
+        id="action_fleet_vehicle_document_view_list"
+        model="ir.actions.act_window.view"
+    >
+        <field name="act_window_id" ref="action_fleet_vehicle_document" />
+        <field name="view_id" ref="view_fleet_vehicle_document_list" />
+        <field name="view_mode">list</field>
+        <field name="sequence">1</field>
+    </record>
+
+    <!-- Bind the form view to the action. -->
+    <record
+        id="action_fleet_vehicle_document_view_form"
+        model="ir.actions.act_window.view"
+    >
+        <field name="act_window_id" ref="action_fleet_vehicle_document" />
+        <field name="view_id" ref="view_fleet_vehicle_document_form" />
+        <field name="view_mode">form</field>
+        <field name="sequence">2</field>
     </record>
 </odoo>
