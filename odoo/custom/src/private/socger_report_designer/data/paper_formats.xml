@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data noupdate="1">
+        <!-- Sequence for Report Designer Layout names -->
+        <record id="seq_report_designer_layout" model="ir.sequence">
+            <field name="name">Report Designer Layout</field>
+            <field name="code">report.designer.layout</field>
+            <field name="prefix">RPT/%(year)s/</field>
+            <field name="padding">4</field>
+            <field name="company_id" eval="False" />
+        </record>
+    </data>
+
+    <data noupdate="1">
+        <!-- Custom Paper Format: A4 Landscape -->
+        <record id="paperformat_a4_landscape" model="report.paperformat">
+            <field name="name">A4 Landscape</field>
+            <field name="default" eval="False" />
+            <field name="format">A4</field>
+            <field name="orientation">Landscape</field>
+            <field name="margin_top">20</field>
+            <field name="margin_bottom">20</field>
+            <field name="margin_left">7</field>
+            <field name="margin_right">7</field>
+            <field name="header_line" eval="False" />
+            <field name="header_spacing">15</field>
+            <field name="dpi">90</field>
+        </record>
+
+        <!-- Custom Paper Format: Letter Portrait -->
+        <record id="paperformat_letter_portrait" model="report.paperformat">
+            <field name="name">Letter Portrait</field>
+            <field name="default" eval="False" />
+            <field name="format">Letter</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">25</field>
+            <field name="margin_bottom">20</field>
+            <field name="margin_left">15</field>
+            <field name="margin_right">15</field>
+            <field name="header_line" eval="False" />
+            <field name="header_spacing">20</field>
+            <field name="dpi">90</field>
+        </record>
+
+        <!-- Custom Paper Format: Letter Landscape -->
+        <record id="paperformat_letter_landscape" model="report.paperformat">
+            <field name="name">Letter Landscape</field>
+            <field name="default" eval="False" />
+            <field name="format">Letter</field>
+            <field name="orientation">Landscape</field>
+            <field name="margin_top">20</field>
+            <field name="margin_bottom">20</field>
+            <field name="margin_left">15</field>
+            <field name="margin_right">15</field>
+            <field name="header_line" eval="False" />
+            <field name="header_spacing">15</field>
+            <field name="dpi">90</field>
+        </record>
+    </data>
+</odoo>

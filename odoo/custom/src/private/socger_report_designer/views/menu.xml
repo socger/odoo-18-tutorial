@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!-- Root Menu -->
+    <menuitem
+        id="menu_report_designer_root"
+        name="Report Designer"
+        sequence="200"
+        web_icon="socger_report_designer,static/description/icon.png"
+    />
+
+    <!-- Layouts Menu -->
+    <menuitem
+        id="menu_report_layouts"
+        name="Report Layouts"
+        parent="menu_report_designer_root"
+        action="report_layout_action"
+        sequence="10"
+    />
+
+    <!-- Visual Designer Menu (opens the React-based client action) -->
+    <menuitem
+        id="menu_report_designer_canvas"
+        name="Visual Designer"
+        parent="menu_report_designer_root"
+        action="action_report_designer"
+        sequence="20"
+    />
+
+    <!-- Settings Menu (Manager only) -->
+    <menuitem
+        id="menu_report_designer_settings"
+        name="Settings"
+        parent="menu_report_designer_root"
+        groups="socger_report_designer.group_report_designer_manager"
+        sequence="90"
+    />
+</odoo>

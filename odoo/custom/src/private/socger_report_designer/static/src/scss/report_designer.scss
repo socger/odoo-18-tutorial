@@ -1,0 +1,23 @@
+// Report Designer - Odoo SCSS Styles
+// Scoped under .o_report_designer_wrapper
+
+.o_report_designer_wrapper {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.o_report_designer_container {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.o_report_designer_fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: #f8f9fa;
+}

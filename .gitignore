@@ -13,6 +13,7 @@
 **.py[co]
 **.egg-info
 **.orig
+**/node_modules
 
 # User-specific or editor-specific development files and settings
 .vscode/*

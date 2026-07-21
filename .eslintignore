@@ -1,0 +1,6 @@
+# React source files are built separately with Vite and should not be linted
+# by Odoo's eslint config (which only supports ES modules via *.esm.js).
+**/react-app/**
+
+# Vite build output — minified bundle, not human code
+**/dist/**

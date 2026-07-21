@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!-- Module Category -->
+    <record id="module_category_report_designer" model="ir.module.category">
+        <field name="name">Report Designer</field>
+        <field name="sequence">200</field>
+    </record>
+
+    <!-- User Group -->
+    <record id="group_report_designer_user" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="module_category_report_designer" />
+    </record>
+
+    <!-- Manager Group -->
+    <record id="group_report_designer_manager" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_category_report_designer" />
+        <field name="implied_ids" eval="[(4, ref('group_report_designer_user'))]" />
+        <field name="users" eval="[(4, ref('base.user_admin'))]" />
+    </record>
+
+    <!-- Record Rule: Multi-Company -->
+    <record id="rule_report_designer_layout_company" model="ir.rule">
+        <field name="name">Report Designer Layout: Multi-Company</field>
+        <field name="model_id" ref="model_report_designer_layout" />
+        <field name="groups" eval="[(4, ref('base.group_user'))]" />
+        <field name="domain_force">[('company_id', 'in', user.company_ids.ids)]</field>
+    </record>
+</odoo>

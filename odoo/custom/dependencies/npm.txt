@@ -1,0 +1,3 @@
+# React Report Designer dependencies
+# Installed at Docker image build time
+# The React app also has its own package.json for build tooling

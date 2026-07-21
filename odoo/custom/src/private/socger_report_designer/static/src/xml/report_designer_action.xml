@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+
+    <t t-name="socger_report_designer.ReportDesignerAction">
+        <div class="o_report_designer_wrapper">
+            <t t-if="state.error">
+                <div class="o_report_designer_fallback">
+                    <div class="text-center p-5">
+                        <i class="fa fa-exclamation-triangle fa-3x text-warning mb-3" />
+                        <h3>Could not load Report Designer</h3>
+                        <p class="text-muted" t-esc="state.error" />
+                        <button
+                            class="btn btn-primary mt-2"
+                            t-on-click="() => this.loadReactApp()"
+                        >
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            </t>
+            <t t-else="">
+                <div t-ref="react-container" class="o_report_designer_container" />
+            </t>
+        </div>
+    </t>
+
+</templates>
