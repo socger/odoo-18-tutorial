@@ -25,6 +25,14 @@ export default function Toolbar({
     return (
         <div className="o_report_designer_toolbar">
             <div className="o_toolbar_left">
+                <button
+                    className="btn btn-sm btn-outline-secondary me-2"
+                    onClick={() => window.history.back()}
+                    title="Volver al formulario"
+                >
+                    <i className="fa fa-arrow-left me-1" />
+                    Volver
+                </button>
                 <i className="fa fa-paint-brush me-2" />
                 <span className="o_toolbar_title">{layoutName}</span>
                 {targetModel && (

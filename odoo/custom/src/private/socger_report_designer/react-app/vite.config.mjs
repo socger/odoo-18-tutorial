@@ -1,9 +1,36 @@
 import {defineConfig} from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import fs from "fs";
+
+/**
+ * Plugin that writes a `version.json` file with the hashed entry filename
+ * so the Odoo OWL wrapper can load the latest bundle (cache-busting).
+ */
+function writeVersionManifest() {
+    return {
+        name: "write-version-manifest",
+        writeBundle(options, bundle) {
+            // Find the entry chunk (report_designer.js or hashed variant)
+            const entryFile = Object.keys(bundle).find(
+                (f) => bundle[f].isEntry && f.endsWith(".js")
+            );
+            if (entryFile) {
+                const manifest = {
+                    version: Date.now().toString(),
+                    entry: entryFile,
+                };
+                fs.writeFileSync(
+                    path.join(options.dir, "version.json"),
+                    JSON.stringify(manifest, null, 2)
+                );
+            }
+        },
+    };
+}
 
 export default defineConfig(({mode}) => ({
-    plugins: [react()],
+    plugins: [react(), writeVersionManifest()],
     root: ".",
     build: {
         outDir: "../static/dist",
@@ -11,7 +38,7 @@ export default defineConfig(({mode}) => ({
         rollupOptions: {
             input: path.resolve(__dirname, "index.html"),
             output: {
-                entryFileNames: "report_designer.js",
+                entryFileNames: "report_designer.[hash].js",
                 chunkFileNames: "chunks/[name].js",
                 assetFileNames: "assets/[name].[ext]",
                 format: "iife",
