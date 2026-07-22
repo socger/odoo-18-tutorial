@@ -171,7 +171,7 @@
     <record id="report_layout_action" model="ir.actions.act_window">
         <field name="name">Report Layouts</field>
         <field name="res_model">report.designer.layout</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="context">{'search_default_published': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
