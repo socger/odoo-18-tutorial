@@ -474,6 +474,25 @@ export default function ReportCanvas({
                     <div className="o_canvas_paper_frame">
                         <canvas ref={canvasRef} />
                     </div>
+                    {/* Empty state overlay — shown when canvas has no elements */}
+                    {elements.length === 0 && (
+                        <div className="o_canvas_empty_overlay">
+                            <div className="o_canvas_empty_content">
+                                <i className="fa fa-paint-brush fa-2x mb-3 text-muted" />
+                                <h5>Start designing your report</h5>
+                                <p>
+                                    <strong>Drag fields</strong> from the left panel
+                                    onto this canvas, or <strong>double-click</strong> a
+                                    field to add it here.
+                                </p>
+                                <p className="text-muted small mb-0">
+                                    Use the Properties panel on the right to customize
+                                    each element. Click <strong>Preview</strong> to see
+                                    the live result.
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -1,12 +1,15 @@
 // Report Designer - Odoo SCSS Styles
-// Scoped under .o_report_designer_wrapper
 
+// Fill the entire Odoo action area reliably.
+// Client actions render inside .o_action > .o_content which has
+// height: 100% + overflow: auto. Using absolute positioning
+// guarantees the wrapper fills available space regardless of
+// the parent's height model.
 .o_report_designer_wrapper {
-    height: 100%;
-    width: 100%;
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
-    position: relative;
     overflow: hidden;
 }
 

@@ -20,6 +20,7 @@
             "socger_report_designer/static/src/js/report_designer_action.esm.js",
             "socger_report_designer/static/src/xml/report_designer_action.xml",
             "socger_report_designer/static/src/scss/report_designer.scss",
+            "socger_report_designer/static/dist/assets/style.css",
         ],
     },
     "installable": True,
