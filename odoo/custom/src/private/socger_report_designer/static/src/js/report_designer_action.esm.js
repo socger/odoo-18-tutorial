@@ -11,7 +11,7 @@ import {rpc} from "@web/core/network/rpc";
  *   - The "Open Designer" button on the report.designer.layout form
  *   - Menu: Reporting > Report Designer
  *
- * The React app is built separately (npm run build inside static/src/react-app/)
+ * The React app is built separately (npm run build inside react-app/)
  * and loaded as an external script. The OWL component mounts the React app
  * into a container div and bridges Odoo RPC calls to the React API client.
  */

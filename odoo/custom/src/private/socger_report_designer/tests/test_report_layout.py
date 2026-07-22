@@ -670,6 +670,8 @@ class TestAPIIntegration(TransactionCase):
         )
 
         ctrl = ReportDesignerController()
+        # Clear any leftover entries from other tests
+        _PREVIEW_CACHE.clear()
         # Fill cache to max
         for i in range(_PREVIEW_CACHE_MAX):
             _PREVIEW_CACHE[f"key_{i}"] = (f"<html>{i}</html>", i)
