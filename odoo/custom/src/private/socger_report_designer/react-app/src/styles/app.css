@@ -761,6 +761,42 @@
     }
 }
 
+/* === RESPONSIVE: SMALL TABLET / PORTRAIT === */
+@media (max-width: 768px) {
+    .o_report_designer_toolbar {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .o_toolbar_left {
+        width: 100%;
+    }
+    .o_toolbar_right {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .o_report_designer_sidebar {
+        flex-direction: column;
+        overflow-x: visible;
+        overflow-y: auto;
+        max-height: 160px;
+    }
+    .o_report_designer_properties {
+        max-height: 180px;
+    }
+    .o_canvas_wrapper {
+        min-height: 500px;
+    }
+    .o_report_canvas_wrapper {
+        overflow-x: auto;
+    }
+    .o_layout_manager {
+        max-height: 140px;
+        overflow-y: auto;
+    }
+}
+
 /* === INLINE PREVIEW (split-view within design mode) === */
 .o_inline_preview {
     display: flex;

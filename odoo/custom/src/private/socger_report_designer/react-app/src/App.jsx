@@ -9,7 +9,7 @@ import LayoutManager from "./components/LayoutManager.jsx";
 import Preview from "./components/Preview.jsx";
 import InlinePreview from "./components/InlinePreview.jsx";
 import useCanvasHistory from "./hooks/useCanvasHistory.js";
-import {useToast} from "./hooks/useToast.js";
+import {useToast} from "./hooks/useToast.jsx";
 import {
     fetchModels,
     fetchFields,

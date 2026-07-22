@@ -29,6 +29,15 @@ function unmount(container) {
     }
 }
 
+// Auto-mount in standalone dev mode (Vite dev server).
+// The index.html has a #report-designer-root div; when running outside
+// the OWL wrapper (standalone Vite), we mount automatically.
+const autoEl =
+    typeof document !== "undefined" && document.getElementById("report-designer-root");
+if (autoEl && autoEl.childNodes.length === 0) {
+    mount(autoEl);
+}
+
 // Expose to global scope for OWL wrapper to call
 if (typeof window !== "undefined") {
     window.ReportDesigner = {mount, unmount};
