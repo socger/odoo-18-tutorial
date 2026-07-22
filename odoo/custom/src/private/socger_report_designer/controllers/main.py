@@ -1,11 +1,18 @@
 import base64
+import hashlib
 import json
 import logging
+import time
 
 from odoo import http
 from odoo.http import request
 
 _logger = logging.getLogger(__name__)
+
+# In-memory preview cache: {hash_key: (html_content, timestamp)}
+_PREVIEW_CACHE = {}
+_PREVIEW_CACHE_TTL = 300  # 5 minutes
+_PREVIEW_CACHE_MAX = 50
 
 
 class ReportDesignerController(http.Controller):
@@ -66,47 +73,73 @@ class ReportDesignerController(http.Controller):
         except Exception as e:
             return {"error": str(e)}
 
-        fields_data = model.fields_get()
-        result = []
+        return {"fields": self._get_model_fields(model_name), "model": model_name}
 
-        # Field type mapping for frontend icons
-        type_icons = {
-            "char": "text",
-            "text": "text",
-            "html": "code",
-            "integer": "number",
-            "float": "number",
-            "monetary": "money",
-            "boolean": "check",
-            "date": "calendar",
-            "datetime": "clock",
-            "binary": "image",
-            "image": "image",
-            "selection": "list",
-            "many2one": "relation",
-            "one2many": "relation-list",
-            "many2many": "relation-many",
+    @http.route(
+        "/api/report-designer/fields/<string:model_name>/related",
+        type="json",
+        auth="user",
+        methods=["POST"],
+        csrf=False,
+    )
+    def get_related_fields(self, model_name, **kwargs):
+        """Return fields for a related model (for nested many2one expansion).
+
+        Accepts ``parent_path`` (e.g. "partner_id") so the frontend can build
+        dotted paths like ``partner_id.name``.
+        """
+        parent_path = kwargs.get("parent_path", "")
+        try:
+            model = request.env[model_name]
+            model.check_access_rights("read")
+        except (KeyError, Exception) as exc:
+            return {"error": str(exc)}
+
+        return {
+            "fields": self._get_model_fields(model_name),
+            "model": model_name,
+            "parent_path": parent_path,
         }
 
-        for fname, fdata in fields_data.items():
-            # Skip internal fields
-            if fname.startswith("_") or fname in (
-                "id",
-                "display_name",
-                "create_uid",
-                "create_date",
-                "write_uid",
-                "write_date",
-            ):
-                continue
+    # === FIELD INTROSPECTION HELPERS === #
 
+    # Field type → frontend icon mapping (shared across endpoints)
+    _TYPE_ICONS = {
+        "char": "text",
+        "text": "text",
+        "html": "code",
+        "integer": "number",
+        "float": "number",
+        "monetary": "money",
+        "boolean": "check",
+        "date": "calendar",
+        "datetime": "clock",
+        "binary": "image",
+        "image": "image",
+        "selection": "list",
+        "many2one": "relation",
+        "one2many": "relation-list",
+        "many2many": "relation-many",
+    }
+
+    _INTERNAL_FIELDS = frozenset(
+        {"id", "display_name", "create_uid", "create_date", "write_uid", "write_date"}
+    )
+
+    def _get_model_fields(self, model_name):
+        """Return a list of field dicts for *model_name*, excluding internals."""
+        fields_data = request.env[model_name].fields_get()
+        result = []
+        for fname, fdata in fields_data.items():
+            if fname.startswith("_") or fname in self._INTERNAL_FIELDS:
+                continue
             field_type = fdata.get("type", "char")
             result.append(
                 {
                     "name": fname,
                     "string": fdata.get("string", fname),
                     "type": field_type,
-                    "icon": type_icons.get(field_type, "question"),
+                    "icon": self._TYPE_ICONS.get(field_type, "question"),
                     "required": fdata.get("required", False),
                     "readonly": fdata.get("readonly", False),
                     "relation": fdata.get("relation"),
@@ -114,8 +147,7 @@ class ReportDesignerController(http.Controller):
                     "help": fdata.get("help"),
                 }
             )
-
-        return {"fields": result, "model": model_name}
+        return result
 
     # === LAYOUT CRUD === #
 
@@ -300,6 +332,60 @@ class ReportDesignerController(http.Controller):
         except Exception as e:
             return {"error": str(e)}
 
+    # === GENERATE XML === #
+
+    @http.route(
+        "/api/report-designer/generate-xml",
+        type="json",
+        auth="user",
+        methods=["POST"],
+        csrf=False,
+    )
+    def generate_xml(self, **kwargs):
+        """Generate QWeb XML from layout JSON without persisting.
+
+        Returns {xml: str} or {error: str}.
+        """
+        layout_json = kwargs.get("layout_json", "{}")
+        try:
+            layout_model = request.env["report.designer.layout"]
+            xml = layout_model.generate_xml_from_json(layout_json)
+            return {"xml": xml}
+        except Exception as e:
+            return {"error": str(e)}
+
+    # === RECORDS FOR PREVIEW === #
+
+    @http.route(
+        "/api/report-designer/records/<string:model_name>",
+        type="json",
+        auth="user",
+        methods=["POST"],
+        csrf=False,
+    )
+    def get_records(self, model_name, **kwargs):
+        """Return a list of records for the given model (for preview selector).
+
+        Returns {records: [{id, display_name}]} or {error}.
+        """
+        try:
+            model = request.env[model_name]
+            model.check_access_rights("read")
+        except (KeyError, Exception) as exc:
+            return {"error": str(exc)}
+
+        limit = kwargs.get("limit", 50)
+        records = model.search([], limit=limit)
+        result = []
+        for rec in records:
+            result.append(
+                {
+                    "id": rec.id,
+                    "display_name": rec.display_name or str(rec.id),
+                }
+            )
+        return {"records": result}
+
     # === PREVIEW === #
 
     @http.route(
@@ -387,6 +473,34 @@ class ReportDesignerController(http.Controller):
 
     # === PREVIEW HELPERS (private) === #
 
+    @staticmethod
+    def _preview_cache_key(layout_json, target_model, record_id=None):
+        """Generate a cache key for the preview result."""
+        raw = json.dumps(
+            {"json": layout_json, "model": target_model, "record": record_id},
+            sort_keys=True,
+            default=str,
+        )
+        return hashlib.sha256(raw.encode()).hexdigest()
+
+    @staticmethod
+    def _preview_cache_get(key):
+        """Return cached HTML if still valid, else None."""
+        entry = _PREVIEW_CACHE.get(key)
+        if entry and (time.monotonic() - entry[1]) < _PREVIEW_CACHE_TTL:
+            return entry[0]
+        if entry:
+            _PREVIEW_CACHE.pop(key, None)
+        return None
+
+    @staticmethod
+    def _preview_cache_set(key, html_content):
+        """Store HTML in preview cache, evicting oldest entries if needed."""
+        if len(_PREVIEW_CACHE) >= _PREVIEW_CACHE_MAX:
+            oldest_key = min(_PREVIEW_CACHE, key=lambda k: _PREVIEW_CACHE[k][1])
+            _PREVIEW_CACHE.pop(oldest_key, None)
+        _PREVIEW_CACHE[key] = (html_content, time.monotonic())
+
     def _live_preview(
         self,
         layout_json,
@@ -407,6 +521,15 @@ class ReportDesignerController(http.Controller):
             if isinstance(records, dict):
                 return records  # error dict
 
+            # Check preview cache (HTML only)
+            if output_format == "html":
+                cache_key = self._preview_cache_key(
+                    layout_json, target_model, record_id
+                )
+                cached = self._preview_cache_get(cache_key)
+                if cached is not None:
+                    return {"html": cached, "record_count": len(records)}
+
             # Generate QWeb XML on-the-fly
             layout_model = request.env["report.designer.layout"]
             qweb_xml = layout_model.generate_preview_qweb(layout_json)
@@ -425,6 +548,8 @@ class ReportDesignerController(http.Controller):
                     html_content = request.env["ir.qweb"]._render(
                         tmp_view.id, {"docs": records}
                     )
+                    # Store in preview cache
+                    self._preview_cache_set(cache_key, html_content)
                     return {"html": html_content, "record_count": len(records)}
 
                 # PDF rendering — create a temporary ir.actions.report so

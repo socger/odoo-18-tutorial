@@ -1,5 +1,6 @@
 import React, {useState} from "react";
 import {createLayout, deleteLayout} from "../api.jsx";
+import ModelSelector from "./ModelSelector.jsx";
 
 /**
  * LayoutManager - lets the user select, create, or delete report layouts
@@ -57,21 +58,11 @@ export default function LayoutManager({
             </div>
 
             {/* Target model selector */}
-            <div className="o_layout_manager_model">
-                <label>Target Model</label>
-                <select
-                    className="form-select form-select-sm"
-                    value={targetModel}
-                    onChange={(e) => onModelChange(e.target.value)}
-                >
-                    <option value="">-- Select model --</option>
-                    {models.map((m) => (
-                        <option key={m.model} value={m.model}>
-                            {m.name} ({m.model})
-                        </option>
-                    ))}
-                </select>
-            </div>
+            <ModelSelector
+                models={models}
+                targetModel={targetModel}
+                onModelChange={onModelChange}
+            />
 
             {/* Create new layout form */}
             {showCreate && (

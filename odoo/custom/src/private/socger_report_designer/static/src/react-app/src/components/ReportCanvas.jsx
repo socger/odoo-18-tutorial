@@ -1,5 +1,6 @@
 import React, {useEffect, useRef, useCallback, useState} from "react";
 import * as fabric from "fabric";
+import {createFabricObject} from "./fabricObjects.js";
 
 /**
  * A4 paper dimensions in pixels at 96 DPI.
@@ -13,15 +14,24 @@ const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.1;
 
 /**
+ * Snap a numeric value to the nearest grid line.
+ */
+function snapToGrid(value) {
+    return Math.round(value / GRID_SIZE) * GRID_SIZE;
+}
+
+/**
  * ReportCanvas — the main visual editor powered by Fabric.js.
  *
  * Props:
- *   elements      – array of layout elements (source of truth in React)
- *   onElementsChange – called when elements change (fabric objects moved/resized)
+ *   elements         – array of layout elements (source of truth in React)
+ *   onElementsChange – called when elements change (receives new array)
  *   onSelectElement  – called when user clicks an element (passes element id)
  *   selectedId       – id of currently selected element (for highlight)
  *   fields           – available model fields (for drop mapping)
  *   onAddElement     – called when a field is dropped onto the canvas
+ *   onUndo           – undo callback (Ctrl+Z)
+ *   onRedo           – redo callback (Ctrl+Y)
  */
 export default function ReportCanvas({
     elements,
@@ -30,13 +40,20 @@ export default function ReportCanvas({
     selectedId,
     fields,
     onAddElement,
+    onUndo,
+    onRedo,
 }) {
     const canvasRef = useRef(null);
     const fabricRef = useRef(null);
     const containerRef = useRef(null);
     const [zoom, setZoom] = useState(1);
     const [gridVisible, setGridVisible] = useState(true);
+    const [snapEnabled, setSnapEnabled] = useState(true);
     const elementsMapRef = useRef(new Map());
+    const clipboardRef = useRef(null);
+    // Always-current reference to avoid stale closures in event handlers
+    const elementsRef = useRef(elements);
+    elementsRef.current = elements;
 
     // === INIT FABRIC CANVAS === //
     useEffect(() => {
@@ -71,10 +88,29 @@ export default function ReportCanvas({
             onSelectElement(null);
         });
 
+        // Snap to grid during drag
+        fc.on("object:moving", (e) => {
+            if (!snapEnabled) return;
+            const obj = e.target;
+            if (!obj || obj.data === "grid") return;
+            obj.set({
+                left: snapToGrid(obj.left),
+                top: snapToGrid(obj.top),
+            });
+        });
+
         // Sync object moves/resizes back to React
         fc.on("object:modified", (e) => {
             const obj = e.target;
             if (!obj || !obj._elementId) return;
+            // Final snap on modification
+            if (snapEnabled) {
+                obj.set({
+                    left: snapToGrid(obj.left),
+                    top: snapToGrid(obj.top),
+                });
+                obj.setCoords();
+            }
             syncObjectToElement(obj);
         });
 
@@ -156,18 +192,21 @@ export default function ReportCanvas({
                 const fc = fabricRef.current;
                 const rect = canvasRef.current.getBoundingClientRect();
                 const zoomVal = fc.getZoom();
-                const x = (e.clientX - rect.left) / zoomVal;
-                const y = (e.clientY - rect.top) / zoomVal;
+                const rawX = (e.clientX - rect.left) / zoomVal;
+                const rawY = (e.clientY - rect.top) / zoomVal;
 
                 onAddElement({
                     ...payload,
-                    position: {x: Math.round(x), y: Math.round(y)},
+                    position: {
+                        x: snapEnabled ? snapToGrid(rawX) : Math.round(rawX),
+                        y: snapEnabled ? snapToGrid(rawY) : Math.round(rawY),
+                    },
                 });
             } catch {
                 // ignore invalid JSON
             }
         },
-        [onAddElement]
+        [onAddElement, snapEnabled]
     );
 
     const handleDragOver = useCallback((e) => {
@@ -213,13 +252,126 @@ export default function ReportCanvas({
         });
     }, []);
 
+    // === TOGGLE SNAP === //
+    const toggleSnap = useCallback(() => {
+        setSnapEnabled((prev) => !prev);
+    }, []);
+
+    // === CLIPBOARD OPERATIONS === //
+    const copySelected = useCallback(() => {
+        const fc = fabricRef.current;
+        if (!fc) return;
+        const active = fc.getActiveObject();
+        if (!active || !active._elementId) return;
+        const elData = elementsRef.current.find((el) => el.id === active._elementId);
+        if (elData) {
+            clipboardRef.current = JSON.parse(JSON.stringify(elData));
+        }
+    }, []);
+
+    const pasteClipboard = useCallback(() => {
+        if (!clipboardRef.current) return;
+        const elData = JSON.parse(JSON.stringify(clipboardRef.current));
+        // Generate new ID and offset position
+        elData.id = `el_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        if (elData.position) {
+            elData.position = {
+                x: elData.position.x + 20,
+                y: elData.position.y + 20,
+            };
+        }
+        onAddElement(elData);
+    }, [onAddElement]);
+
+    const duplicateSelected = useCallback(() => {
+        const fc = fabricRef.current;
+        if (!fc) return;
+        const active = fc.getActiveObject();
+        if (!active || !active._elementId) return;
+        const elData = elementsRef.current.find((el) => el.id === active._elementId);
+        if (elData) {
+            const clone = JSON.parse(JSON.stringify(elData));
+            clone.id = `el_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+            if (clone.position) {
+                clone.position = {x: clone.position.x + 20, y: clone.position.y + 20};
+            }
+            onAddElement(clone);
+        }
+    }, [onAddElement]);
+
+    const selectAll = useCallback(() => {
+        const fc = fabricRef.current;
+        if (!fc) return;
+        const objs = fc.getObjects().filter((o) => o._elementId && o.selectable);
+        if (objs.length === 0) return;
+        const sel = new fabric.ActiveSelection(objs, {canvas: fc});
+        fc.setActiveObject(sel);
+        fc.renderAll();
+    }, []);
+
     // === KEYBOARD SHORTCUTS === //
     useEffect(() => {
         const handleKey = (e) => {
             const fc = fabricRef.current;
             if (!fc) return;
 
-            // Delete selected
+            // Skip shortcuts when focus is inside an input/textarea/select
+            const tag = e.target.tagName.toLowerCase();
+            if (tag === "input" || tag === "textarea" || tag === "select") return;
+
+            const ctrl = e.ctrlKey || e.metaKey;
+
+            // Ctrl+Z — Undo
+            if (ctrl && e.key === "z" && !e.shiftKey) {
+                e.preventDefault();
+                onUndo?.();
+                return;
+            }
+
+            // Ctrl+Y or Ctrl+Shift+Z — Redo
+            if ((ctrl && e.key === "y") || (ctrl && e.key === "z" && e.shiftKey)) {
+                e.preventDefault();
+                onRedo?.();
+                return;
+            }
+
+            // Ctrl+C — Copy
+            if (ctrl && e.key === "c") {
+                e.preventDefault();
+                copySelected();
+                return;
+            }
+
+            // Ctrl+V — Paste
+            if (ctrl && e.key === "v") {
+                e.preventDefault();
+                pasteClipboard();
+                return;
+            }
+
+            // Ctrl+D — Duplicate
+            if (ctrl && e.key === "d") {
+                e.preventDefault();
+                duplicateSelected();
+                return;
+            }
+
+            // Ctrl+A — Select all
+            if (ctrl && e.key === "a") {
+                e.preventDefault();
+                selectAll();
+                return;
+            }
+
+            // Escape — Deselect
+            if (e.key === "Escape") {
+                fc.discardActiveObject();
+                fc.renderAll();
+                onSelectElement(null);
+                return;
+            }
+
+            // Delete / Backspace — Remove selected
             if (e.key === "Delete" || e.key === "Backspace") {
                 const active = fc.getActiveObject();
                 if (active && active._elementId) {
@@ -227,15 +379,26 @@ export default function ReportCanvas({
                     fc.remove(active);
                     elementsMapRef.current.delete(id);
                     fc.renderAll();
-                    // Notify parent — remove element from state
-                    onElementsChange((prev) => prev.filter((el) => el.id !== id));
+                    const newElements = elementsRef.current.filter(
+                        (el) => el.id !== id
+                    );
+                    onElementsChange(newElements);
                     onSelectElement(null);
                 }
             }
         };
         window.addEventListener("keydown", handleKey);
         return () => window.removeEventListener("keydown", handleKey);
-    }, [onElementsChange, onSelectElement]);
+    }, [
+        onElementsChange,
+        onSelectElement,
+        onUndo,
+        onRedo,
+        copySelected,
+        pasteClipboard,
+        duplicateSelected,
+        selectAll,
+    ]);
 
     return (
         <div className="o_report_canvas_wrapper">
@@ -279,6 +442,17 @@ export default function ReportCanvas({
                     >
                         <i className="fa fa-th" />
                     </button>
+                    <button
+                        className={`btn btn-sm ${
+                            snapEnabled
+                                ? "btn-outline-success"
+                                : "btn-outline-secondary"
+                        }`}
+                        onClick={toggleSnap}
+                        title="Toggle snap to grid"
+                    >
+                        <i className="fa fa-magnet" />
+                    </button>
                 </div>
             </div>
 
@@ -306,304 +480,6 @@ export default function ReportCanvas({
     );
 }
 
-// === FABRIC OBJECT FACTORY === //
-
-function createFabricObject(element) {
-    const style = element.style || {};
-    const pos = element.position || {x: 20, y: 20};
-
-    switch (element.type) {
-        case "text":
-            return createTextObject(element, pos, style);
-        case "heading":
-            return createHeadingObject(element, pos, style);
-        case "line":
-            return createLineObject(element, pos, style);
-        case "image":
-            return createImagePlaceholder(element, pos, style);
-        case "spacer":
-            return createSpacerObject(element, pos, style);
-        case "pagebreak":
-            return createPageBreakObject(element, pos);
-        case "table":
-            return createTablePlaceholder(element, pos, style);
-        default:
-            return createTextObject(element, pos, style);
-    }
-}
-
-function createTextObject(element, pos, style) {
-    const label = element.fieldPath
-        ? `[${element.fieldPath}]`
-        : element.content || "Text";
-    return new fabric.Textbox(label, {
-        left: pos.x,
-        top: pos.y,
-        fontSize: style.fontSize || 12,
-        fontWeight: style.fontWeight || "normal",
-        fill: style.color || "#000000",
-        textAlign: style.textAlign || "left",
-        fontFamily: "sans-serif",
-        width: 300,
-        padding: 4,
-        editable: false,
-        hasControls: true,
-        borderColor: "#0d6efd",
-        cornerColor: "#0d6efd",
-        cornerSize: 8,
-        transparentCorners: false,
-    });
-}
-
-function createHeadingObject(element, pos, style) {
-    const level = style.level || 2;
-    const sizes = {1: 24, 2: 20, 3: 16, 4: 14, 5: 12, 6: 11};
-    const label = element.content || `Heading ${level}`;
-    return new fabric.Textbox(label, {
-        left: pos.x,
-        top: pos.y,
-        fontSize: sizes[level] || 20,
-        fontWeight: "bold",
-        fill: style.color || "#000000",
-        textAlign: style.textAlign || "left",
-        fontFamily: "sans-serif",
-        width: 500,
-        padding: 4,
-        editable: false,
-        borderColor: "#0d6efd",
-        cornerColor: "#0d6efd",
-        cornerSize: 8,
-        transparentCorners: false,
-    });
-}
-
-function createLineObject(element, pos, style) {
-    return new fabric.Line([pos.x, pos.y, pos.x + 700, pos.y], {
-        stroke: style.color || "#cccccc",
-        strokeWidth: style.strokeWidth || 1,
-        selectable: true,
-        borderColor: "#0d6efd",
-        cornerColor: "#0d6efd",
-        cornerSize: 8,
-        transparentCorners: false,
-    });
-}
-
-function createImagePlaceholder(element, pos, style) {
-    const maxWidth = parseInt(style.maxWidth, 10) || 200;
-    const rect = new fabric.Rect({
-        width: maxWidth,
-        height: Math.round(maxWidth * 0.75),
-        fill: "#e9ecef",
-        stroke: "#adb5bd",
-        strokeWidth: 1,
-        strokeDashArray: [5, 5],
-    });
-    const text = new fabric.Text("Image", {
-        fontSize: 12,
-        fill: "#6c757d",
-        originX: "center",
-        originY: "center",
-    });
-    const group = new fabric.Group([rect, text], {
-        left: pos.x,
-        top: pos.y,
-        selectable: true,
-        borderColor: "#0d6efd",
-        cornerColor: "#0d6efd",
-        cornerSize: 8,
-        transparentCorners: false,
-    });
-    return group;
-}
-
-function createSpacerObject(element, pos, style) {
-    const height = parseInt(style.height, 10) || 20;
-    return new fabric.Rect({
-        left: pos.x,
-        top: pos.y,
-        width: 700,
-        height: height,
-        fill: "transparent",
-        stroke: "#adb5bd",
-        strokeWidth: 1,
-        strokeDashArray: [3, 3],
-        selectable: true,
-        borderColor: "#0d6efd",
-        cornerColor: "#0d6efd",
-        cornerSize: 8,
-        transparentCorners: false,
-    });
-}
-
-function createPageBreakObject(element, pos) {
-    const line = new fabric.Line([0, 0, 700, 0], {
-        stroke: "#dc3545",
-        strokeWidth: 1,
-        strokeDashArray: [8, 4],
-    });
-    const label = new fabric.Text("PAGE BREAK", {
-        fontSize: 9,
-        fill: "#dc3545",
-        fontFamily: "sans-serif",
-        left: 5,
-        top: -12,
-    });
-    return new fabric.Group([line, label], {
-        left: pos.x,
-        top: pos.y,
-        selectable: true,
-        borderColor: "#0d6efd",
-        cornerColor: "#0d6efd",
-        cornerSize: 8,
-        transparentCorners: false,
-    });
-}
-
-function createTablePlaceholder(element, pos, style) {
-    const ds = element.dataSource || "(no data source)";
-    const columns = element.columns || [];
-
-    // Geometry
-    const tableWidth = 700;
-    const rowHeight = 22;
-    const headerHeight = 26;
-    const colCount = Math.max(columns.length, 1);
-    const colWidth = tableWidth / colCount;
-
-    const objects = [];
-
-    // Header background
-    objects.push(
-        new fabric.Rect({
-            width: tableWidth,
-            height: headerHeight,
-            fill: "#e9ecef",
-            stroke: "#6f42c1",
-            strokeWidth: 1,
-            originX: "left",
-            originY: "top",
-            left: 0,
-            top: 0,
-        })
-    );
-
-    // Header cells
-    if (columns.length === 0) {
-        objects.push(
-            new fabric.Text(`Table: ${ds} — add columns`, {
-                fontSize: 11,
-                fill: "#6f42c1",
-                left: 8,
-                top: 6,
-                fontFamily: "sans-serif",
-            })
-        );
-    } else {
-        columns.forEach((col, i) => {
-            const headerText = col.header || col.fieldPath || `Col ${i + 1}`;
-            objects.push(
-                new fabric.Text(String(headerText).slice(0, 20), {
-                    fontSize: 10,
-                    fontWeight: "bold",
-                    fill: "#495057",
-                    left: i * colWidth + 6,
-                    top: 7,
-                    fontFamily: "sans-serif",
-                })
-            );
-            // Vertical separator
-            if (i > 0) {
-                objects.push(
-                    new fabric.Line([i * colWidth, 0, i * colWidth, headerHeight], {
-                        stroke: "#ced4da",
-                        strokeWidth: 1,
-                        originX: "left",
-                        originY: "top",
-                        left: i * colWidth,
-                        top: 0,
-                    })
-                );
-            }
-        });
-    }
-
-    // Empty body row (sample)
-    const bodyHeight = rowHeight;
-    objects.push(
-        new fabric.Rect({
-            width: tableWidth,
-            height: bodyHeight,
-            fill: "transparent",
-            stroke: "#6f42c1",
-            strokeWidth: 1,
-            originX: "left",
-            originY: "top",
-            left: 0,
-            top: headerHeight,
-        })
-    );
-    columns.forEach((col, i) => {
-        const placeholder = col.fieldPath ? `t-field: line.${col.fieldPath}` : "...";
-        objects.push(
-            new fabric.Text(`[${placeholder}]`, {
-                fontSize: 9,
-                fill: "#adb5bd",
-                fontStyle: "italic",
-                left: i * colWidth + 6,
-                top: headerHeight + 6,
-                fontFamily: "sans-serif",
-            })
-        );
-        if (i > 0) {
-            objects.push(
-                new fabric.Line(
-                    [
-                        i * colWidth,
-                        headerHeight,
-                        i * colWidth,
-                        headerHeight + bodyHeight,
-                    ],
-                    {
-                        stroke: "#e9ecef",
-                        strokeWidth: 1,
-                        originX: "left",
-                        originY: "top",
-                        left: i * colWidth,
-                        top: headerHeight,
-                    }
-                )
-            );
-        }
-    });
-
-    // Data source label
-    objects.push(
-        new fabric.Text(`O2M: ${ds}`, {
-            fontSize: 9,
-            fill: "#6f42c1",
-            left: 0,
-            top: headerHeight + bodyHeight + 4,
-            fontFamily: "sans-serif",
-        })
-    );
-
-    const totalHeight = headerHeight + bodyHeight + 18 + (columns.length === 0 ? 0 : 0);
-
-    return new fabric.Group(objects, {
-        left: pos.x,
-        top: pos.y,
-        selectable: true,
-        borderColor: "#0d6efd",
-        cornerColor: "#0d6efd",
-        cornerSize: 8,
-        transparentCorners: false,
-        // Internal metadata for sizing
-        _tableWidth: tableWidth,
-        _tableHeight: totalHeight,
-    });
-}
-
 // === HELPERS === //
 
 function updateFabricObject(fabObj, element) {
@@ -615,10 +491,8 @@ function updateFabricObject(fabObj, element) {
 }
 
 function syncObjectToElement(fabObj) {
-    // This mutates the element object in-place so the parent can read it
-    // The parent's onElementsChange will handle the actual state update
-    if (!fabObj._elementId) return;
     // Position is synced via the object:modified event
+    if (!fabObj._elementId) return;
 }
 
 function drawGrid(fc) {

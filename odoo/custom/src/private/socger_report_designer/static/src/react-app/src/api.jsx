@@ -25,6 +25,20 @@ export async function fetchFields(modelName, rpc) {
 }
 
 /**
+ * Fetch fields for a related model (for nested many2one expansion).
+ * @param {string} modelName - Related model name (e.g. "res.partner")
+ * @param {string} parentPath - Dotted path prefix (e.g. "partner_id")
+ * @param {Function} rpc - RPC function
+ * @returns {Promise<Object>} {fields, model, parent_path}
+ */
+export async function fetchRelatedFields(modelName, parentPath, rpc) {
+    const result = await rpc(`/api/report-designer/fields/${modelName}/related`, {
+        parent_path: parentPath,
+    });
+    return result;
+}
+
+/**
  * Fetch all report layouts.
  * @param {Function} rpc - RPC function
  * @returns {Promise<Array>} List of layout objects
@@ -96,6 +110,33 @@ export async function publishLayout(layoutId, rpc) {
 export async function unpublishLayout(layoutId, rpc) {
     const result = await rpc(`/api/report-designer/layouts/${layoutId}/unpublish`, {});
     return result;
+}
+
+/**
+ * Generate QWeb XML from layout JSON without persisting.
+ * @param {string|Object} layoutJson - Layout JSON (string or parsed object)
+ * @param {Function} rpc - RPC function
+ * @returns {Promise<Object>} {xml: str} or {error}
+ */
+export async function generateXml(layoutJson, rpc) {
+    const result = await rpc("/api/report-designer/generate-xml", {
+        layout_json: layoutJson,
+    });
+    return result;
+}
+
+/**
+ * Fetch records for a given model (for preview record selector).
+ * @param {string} modelName - Odoo model name
+ * @param {Function} rpc - RPC function
+ * @param {number} limit - Max records to fetch (default 50)
+ * @returns {Promise<Array>} List of {id, display_name}
+ */
+export async function fetchRecords(modelName, rpc, limit = 50) {
+    const result = await rpc(`/api/report-designer/records/${modelName}`, {
+        limit,
+    });
+    return result.records || [];
 }
 
 /**

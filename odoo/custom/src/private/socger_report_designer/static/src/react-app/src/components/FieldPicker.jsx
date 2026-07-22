@@ -1,4 +1,5 @@
-import React, {useState, useMemo} from "react";
+import React, {useState, useMemo, useCallback} from "react";
+import {fetchRelatedFields} from "../api.jsx";
 
 /**
  * Structural elements that can be added without a field binding.
@@ -39,11 +40,17 @@ const STRUCTURAL_ELEMENTS = [
 /**
  * FieldPicker component - sidebar panel that shows available Odoo model fields
  * and allows dragging them onto the canvas.  Also provides structural elements.
+ *
+ * Supports expanding many2one fields into nested dotted paths (e.g.
+ * ``partner_id.name``) via an inline sub-list that loads related model
+ * fields on demand.
  */
-export default function FieldPicker({fields, targetModel, onAddElement}) {
+export default function FieldPicker({fields, targetModel, onAddElement, rpc}) {
     const [searchTerm, setSearchTerm] = useState("");
     const [filterType, setFilterType] = useState("all");
     const [showStructural, setShowStructural] = useState(true);
+    // Map of parentFieldName → {loading, fields, error, parentPath}
+    const [expandedRelations, setExpandedRelations] = useState({});
 
     const typeGroups = useMemo(() => {
         const groups = {};
@@ -106,6 +113,90 @@ export default function FieldPicker({fields, targetModel, onAddElement}) {
         }
         onAddElement(payload);
     }
+
+    /**
+     * Toggle expansion of a many2one relation field.  When first expanded
+     * it fetches the related model's fields from the backend.
+     */
+    const toggleRelation = useCallback(
+        async (field) => {
+            const fname = field.name;
+            const currently = expandedRelations[fname];
+            if (currently && !currently.error) {
+                // Collapse
+                setExpandedRelations((prev) => {
+                    const next = {...prev};
+                    delete next[fname];
+                    return next;
+                });
+                return;
+            }
+            // Start loading
+            setExpandedRelations((prev) => ({
+                ...prev,
+                [fname]: {loading: true, fields: [], parentPath: fname},
+            }));
+            try {
+                const relatedModel = field.relation;
+                if (!relatedModel || !rpc) {
+                    throw new Error("No related model or RPC not available");
+                }
+                const result = await fetchRelatedFields(relatedModel, fname, rpc);
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+                setExpandedRelations((prev) => ({
+                    ...prev,
+                    [fname]: {
+                        loading: false,
+                        fields: result.fields || [],
+                        parentPath: fname,
+                        modelName: relatedModel,
+                    },
+                }));
+            } catch (err) {
+                setExpandedRelations((prev) => ({
+                    ...prev,
+                    [fname]: {
+                        loading: false,
+                        fields: [],
+                        error: err.message || "Failed to load fields",
+                        parentPath: fname,
+                    },
+                }));
+            }
+        },
+        [expandedRelations, rpc]
+    );
+
+    /**
+     * Handle drag of a nested (dotted) field path.
+     */
+    function handleNestedDragStart(e, parentPath, field) {
+        const fullPath = `${parentPath}.${field.name}`;
+        e.dataTransfer.setData(
+            "application/json",
+            JSON.stringify({
+                type: "text",
+                fieldPath: fullPath,
+                content: field.string || field.name,
+                style: {},
+            })
+        );
+        e.dataTransfer.effectAllowed = "copy";
+    }
+
+    function handleNestedDoubleClick(parentPath, field) {
+        const fullPath = `${parentPath}.${field.name}`;
+        onAddElement({
+            type: "text",
+            fieldPath: fullPath,
+            content: field.string || field.name,
+            style: {},
+        });
+    }
+
+    const isExpandable = (field) => field.type === "many2one" && field.relation;
 
     return (
         <div className="o_field_picker">
@@ -186,26 +277,92 @@ export default function FieldPicker({fields, targetModel, onAddElement}) {
                                 <div className="o_field_picker_group_label">
                                     {group}
                                 </div>
-                                {groupFields.map((field) => (
-                                    <div
-                                        key={field.name}
-                                        className="o_field_picker_item"
-                                        draggable
-                                        onDragStart={(e) => handleDragStart(e, field)}
-                                        onDoubleClick={() => handleDoubleClick(field)}
-                                        title={`${field.name} (${field.type})`}
-                                    >
-                                        <span
-                                            className={`o_field_picker_icon fa fa-${field.icon}`}
-                                        />
-                                        <span className="o_field_picker_name">
-                                            {field.string}
-                                        </span>
-                                        <span className="o_field_picker_type text-muted">
-                                            {field.type}
-                                        </span>
-                                    </div>
-                                ))}
+                                {groupFields.map((field) => {
+                                    const expanded = expandedRelations[field.name];
+                                    return (
+                                        <React.Fragment key={field.name}>
+                                            <div
+                                                className="o_field_picker_item"
+                                                draggable
+                                                onDragStart={(e) =>
+                                                    handleDragStart(e, field)
+                                                }
+                                                onDoubleClick={() =>
+                                                    handleDoubleClick(field)
+                                                }
+                                                title={`${field.name} (${field.type})`}
+                                            >
+                                                <span
+                                                    className={`o_field_picker_icon fa fa-${field.icon}`}
+                                                />
+                                                <span className="o_field_picker_name">
+                                                    {field.string}
+                                                </span>
+                                                <span className="o_field_picker_type text-muted">
+                                                    {field.type}
+                                                </span>
+                                                {isExpandable(field) && (
+                                                    <span
+                                                        className="o_field_picker_expand fa fa-chevron-right"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleRelation(field);
+                                                        }}
+                                                        title="Expand related fields"
+                                                    />
+                                                )}
+                                            </div>
+                                            {/* Nested fields for expanded many2one */}
+                                            {expanded && (
+                                                <div className="o_field_picker_nested">
+                                                    {expanded.loading && (
+                                                        <div className="o_field_picker_nested_loading">
+                                                            <i className="fa fa-spinner fa-spin me-1" />
+                                                            Loading...
+                                                        </div>
+                                                    )}
+                                                    {expanded.error && (
+                                                        <div className="o_field_picker_nested_error text-danger small px-3">
+                                                            {expanded.error}
+                                                        </div>
+                                                    )}
+                                                    {expanded.fields &&
+                                                        expanded.fields.map((nf) => (
+                                                            <div
+                                                                key={nf.name}
+                                                                className="o_field_picker_item o_field_picker_nested_item"
+                                                                draggable
+                                                                onDragStart={(e) =>
+                                                                    handleNestedDragStart(
+                                                                        e,
+                                                                        expanded.parentPath,
+                                                                        nf
+                                                                    )
+                                                                }
+                                                                onDoubleClick={() =>
+                                                                    handleNestedDoubleClick(
+                                                                        expanded.parentPath,
+                                                                        nf
+                                                                    )
+                                                                }
+                                                                title={`${expanded.parentPath}.${nf.name} (${nf.type})`}
+                                                            >
+                                                                <span
+                                                                    className={`o_field_picker_icon fa fa-${nf.icon}`}
+                                                                />
+                                                                <span className="o_field_picker_name">
+                                                                    {nf.string}
+                                                                </span>
+                                                                <span className="o_field_picker_type text-muted">
+                                                                    {nf.type}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                            )}
+                                        </React.Fragment>
+                                    );
+                                })}
                             </div>
                         ))}
                         {Object.keys(typeGroups).length === 0 && (

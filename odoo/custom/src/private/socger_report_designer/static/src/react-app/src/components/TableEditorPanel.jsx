@@ -5,7 +5,7 @@ import React, {useState, useEffect, useCallback} from "react";
  *
  * Props:
  *   element      - the table element being edited
- *   fields       - parent model fields (to find the O2M relation model)
+ *   fields       - parent model fields (to find the O2M/M2M relation model)
  *   rpc          - RPC function to fetch related model fields
  *   onUpdate     - callback(elementId, updates) to update the element
  */
@@ -15,10 +15,11 @@ export default function TableEditorPanel({element, fields, rpc, onUpdate}) {
 
     const columns = element.columns || [];
     const dataSource = element.dataSource || "";
+    const tableStyle = element.tableStyle || {};
 
-    // Find the related model name from the O2M field definition
-    const o2mField = fields.find((f) => f.name === dataSource);
-    const relationModel = o2mField?.relation || "";
+    // Find the related model name from the O2M/M2M field definition
+    const relField = fields.find((f) => f.name === dataSource);
+    const relationModel = relField?.relation || "";
 
     // Fetch related model fields when dataSource changes
     const fetchRelatedFields = useCallback(async () => {
@@ -52,6 +53,7 @@ export default function TableEditorPanel({element, fields, rpc, onUpdate}) {
                 fieldPath: "",
                 align: "left",
                 width: "",
+                aggregate: "none",
             },
         ];
         onUpdate(element.id, {columns: newColumns});
@@ -88,7 +90,7 @@ export default function TableEditorPanel({element, fields, rpc, onUpdate}) {
                     </h5>
                 </div>
                 <p className="text-muted small p-2 text-center">
-                    Select a data source (O2M field) first to configure columns.
+                    Select a data source (O2M or M2M field) first to configure columns.
                 </p>
             </div>
         );
@@ -197,7 +199,7 @@ export default function TableEditorPanel({element, fields, rpc, onUpdate}) {
 
                                     {/* Alignment */}
                                     <div className="o_table_column_row">
-                                        <div className="o_table_column_field o_table_column_half">
+                                        <div className="o_table_column_field o_table_column_third">
                                             <label>Align</label>
                                             <select
                                                 className="form-select form-select-sm"
@@ -215,7 +217,7 @@ export default function TableEditorPanel({element, fields, rpc, onUpdate}) {
                                                 <option value="right">Right</option>
                                             </select>
                                         </div>
-                                        <div className="o_table_column_field o_table_column_half">
+                                        <div className="o_table_column_field o_table_column_third">
                                             <label>Width</label>
                                             <input
                                                 type="text"
@@ -230,6 +232,27 @@ export default function TableEditorPanel({element, fields, rpc, onUpdate}) {
                                                 }
                                                 placeholder="auto"
                                             />
+                                        </div>
+                                        <div className="o_table_column_field o_table_column_third">
+                                            <label>Aggregate</label>
+                                            <select
+                                                className="form-select form-select-sm"
+                                                value={col.aggregate || "none"}
+                                                onChange={(e) =>
+                                                    updateColumn(
+                                                        index,
+                                                        "aggregate",
+                                                        e.target.value
+                                                    )
+                                                }
+                                            >
+                                                <option value="none">None</option>
+                                                <option value="sum">Sum</option>
+                                                <option value="avg">Average</option>
+                                                <option value="count">Count</option>
+                                                <option value="min">Min</option>
+                                                <option value="max">Max</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>

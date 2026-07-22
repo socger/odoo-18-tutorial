@@ -253,6 +253,7 @@ export default function App({layoutId, backendRpc}) {
                                     fields={fields}
                                     targetModel={targetModel}
                                     onAddElement={addElement}
+                                    rpc={backendRpc || defaultRpc}
                                 />
                             </div>
                             <div className="o_report_designer_canvas">
@@ -263,6 +264,8 @@ export default function App({layoutId, backendRpc}) {
                                     onSelectElement={setSelectedId}
                                     onAddElement={addElement}
                                     fields={fields}
+                                    onUndo={undo}
+                                    onRedo={redo}
                                 />
                             </div>
                             <div className="o_report_designer_properties">

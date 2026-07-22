@@ -1,5 +1,6 @@
 import json
 import logging
+from xml.etree import ElementTree
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
@@ -304,6 +305,57 @@ class ReportDesignerLayout(models.Model):
             "context": {"active_id": self.id},
         }
 
+    # === XML VALIDATION === #
+
+    def _validate_xml(self, xml_string):
+        """Validate that a string is well-formed XML.
+
+        Raises UserError if parsing fails.
+        """
+        try:
+            ElementTree.fromstring(xml_string)
+        except ElementTree.ParseError as exc:
+            # pylint: disable=translation-not-lazy
+            raise UserError(
+                _("Generated XML is not well-formed: %s") % (str(exc),)
+            ) from exc
+
+    def generate_xml_from_json(self, layout_json):
+        """Public method: generate QWeb XML from layout JSON string or dict.
+
+        Returns the validated XML string.
+        """
+        if isinstance(layout_json, str):
+            try:
+                layout = json.loads(layout_json)
+            except (json.JSONDecodeError, TypeError):
+                layout = {}
+        else:
+            layout = layout_json or {}
+
+        elements = layout.get("elements", [])
+        xml_elements = []
+        for element in elements:
+            xml_elem = self._render_element_to_xml(element)
+            if xml_elem:
+                xml_elements.append(xml_elem)
+
+        body_content = "\n".join(xml_elements) if xml_elements else "<p>No content</p>"
+
+        template_xml = f"""<template>
+    <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="o">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    {body_content}
+                </div>
+            </t>
+        </t>
+    </t>
+</template>"""
+        self._validate_xml(template_xml)
+        return template_xml
+
     # === PRIVATE METHODS === #
     def _generate_qweb_xml(self, record):
         """Generate QWeb XML template from layout JSON."""
@@ -325,6 +377,7 @@ class ReportDesignerLayout(models.Model):
     </t>
 </template>"""
 
+        self._validate_xml(template_xml)
         return template_xml
 
     def generate_preview_qweb(self, layout_json):
@@ -471,6 +524,20 @@ class ReportDesignerLayout(models.Model):
 
         return inner_xml
 
+    # === FIELD FORMAT → t-options WIDGET MAP === #
+    _FIELD_FORMAT_OPTIONS = {
+        "monetary": {"widget": "monetary"},
+        "date": {"format": "dd MMMM yyyy"},
+        "datetime": {"format": "dd MMMM yyyy HH:mm"},
+        "float_time": {"widget": "float_time"},
+        "float": {"widget": "float", "precision": 2},
+        "integer": {"widget": "integer"},
+        "char": {"widget": "char"},
+        "html": {"widget": "html"},
+        "selection": {"widget": "selection"},
+        "many2one": {"widget": "many2one"},
+    }
+
     def _render_text_element(self, element):
         """Render a text element — can bind to a field or show static content."""
         field_path = element.get("fieldPath", "")
@@ -479,8 +546,17 @@ class ReportDesignerLayout(models.Model):
         attr = self._style_attr(style)
 
         if field_path:
-            # Use t-field for automatic formatting (dates, monetary, etc.)
-            return f'<p{attr}><span t-field="o.{field_path}"/></p>'
+            # Build t-options when a custom field format is set
+            field_format = (style or {}).get("fieldFormat", "")
+            t_options_attr = ""
+            if field_format and field_format in self._FIELD_FORMAT_OPTIONS:
+                opts = self._FIELD_FORMAT_OPTIONS[field_format]
+                # For monetary we need display_currency — use o.currency_id if available
+                if field_format == "monetary":
+                    opts = {"widget": "monetary", "display_currency": "o.currency_id"}
+                opts_str = str(opts).replace("'", '"')
+                t_options_attr = f" t-options='{opts_str}'"
+            return f'<p{attr}><span t-field="o.{field_path}"' f"{t_options_attr}/></p>"
         if content:
             # Static text — escape XML entities
             safe = (
@@ -583,18 +659,36 @@ class ReportDesignerLayout(models.Model):
         """Render a table element to QWeb XML.
 
         The element JSON may contain:
-            - dataSource: O2M field name to iterate over
-            - columns: list of {header, fieldPath, fieldType, align, width}
+            - dataSource: O2M or M2M field name to iterate over
+            - columns: list of {header, fieldPath, fieldType, align, width, aggregate}
             - style: optional table-level styling
+            - tableStyle: {headerBgColor, headerFontSize, zebraStriping,
+                          showFooter, showBorders}
         """
         data_source = element.get("dataSource", "")
         columns = element.get("columns", [])
         table_style = element.get("style", {})
+        t_style = element.get("tableStyle", {})
 
         if not data_source or not columns:
             return ""
 
         table_attr = self._style_attr(table_style)
+
+        # Table CSS classes
+        table_classes = "table"
+        if t_style.get("showBorders", True):
+            table_classes += " table-bordered"
+        else:
+            table_classes += " table-borderless"
+        table_classes += " table-sm"
+
+        # Header styling
+        header_bg = t_style.get("headerBgColor", "#e9ecef")
+        header_font_size = t_style.get("headerFontSize", 10)
+        header_style = (
+            f"background-color: {header_bg}; font-size: {header_font_size}px;"
+        )
 
         # Build header cells
         header_cells = []
@@ -605,10 +699,10 @@ class ReportDesignerLayout(models.Model):
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
             )
-            header_cells.append(f"<th>{safe}</th>")
+            header_cells.append(f'<th style="{header_style}">{safe}</th>')
         header_row = "<tr>\n" + "\n".join(header_cells) + "\n</tr>"
 
-        # Build body rows
+        # Build body row template
         body_cells = []
         for col in columns:
             field_path = col.get("fieldPath", "")
@@ -629,13 +723,106 @@ class ReportDesignerLayout(models.Model):
 
         body_row = "<tr>\n" + "\n".join(body_cells) + "\n</tr>"
 
-        return f"""<table class="table table-sm"{table_attr}>
+        # Build optional footer row with aggregates
+        footer_row = ""
+        if t_style.get("showFooter", False):
+            footer_row = self._build_table_footer(columns, data_source, table_attr)
+
+        return f"""<table class="{table_classes}"{table_attr}>
     <thead>
         {header_row}
     </thead>
+    {footer_row}
     <tbody>
         <t t-foreach="o.{data_source}" t-as="line">
             {body_row}
         </t>
     </tbody>
 </table>"""
+
+    def _build_table_footer(self, columns, data_source, _table_attr):
+        """Build QWeb ``<tfoot>`` row for table aggregate columns."""
+        footer_cells = []
+        has_any_aggregate = False
+        for col in columns:
+            aggregate = col.get("aggregate", "none")
+            field_path = col.get("fieldPath", "")
+            align = col.get("align", "")
+            td_style_parts = ["font-weight: bold"]
+            if align:
+                td_style_parts.append(f"text-align: {align}")
+            td_attr = f' style="{"; ".join(td_style_parts)}"' if td_style_parts else ""
+            if aggregate and aggregate != "none" and field_path:
+                has_any_aggregate = True
+                footer_cells.append(
+                    self._agg_cell(td_attr, aggregate, data_source, field_path)
+                )
+            else:
+                footer_cells.append(f"<td{td_attr}/>")
+
+        if not has_any_aggregate:
+            return ""
+        return "<tfoot>\n<tr>\n" + "\n".join(footer_cells) + "\n</tr>\n</tfoot>"
+
+    def _agg_cell(self, td_attr, aggregate, data_source, field_path):
+        """Return a ``<td>…</td>`` string for a single aggregate cell."""
+        if aggregate == "sum":
+            return (
+                f"<td{td_attr}>"
+                f"<t t-set='__agg_sum' t-value='0'/>"
+                f"<t t-foreach='o.{data_source}' t-as='__agg_line'/>"
+                f"<t t-set='__agg_sum' "
+                f"t-value='__agg_sum + __agg_line.{field_path}'/>"
+                f"<span t-esc='__agg_sum'/>"
+                f"</td>"
+            )
+        if aggregate == "avg":
+            return (
+                f"<td{td_attr}>"
+                f"<t t-set='__agg_sum' t-value='0'/>"
+                f"<t t-set='__agg_count' t-value='0'/>"
+                f"<t t-foreach='o.{data_source}' t-as='__agg_line'/>"
+                f"<t t-set='__agg_sum' "
+                f"t-value='__agg_sum + __agg_line.{field_path}'/>"
+                f"<t t-set='__agg_count' t-value='__agg_count + 1'/>"
+                f"<t t-if='__agg_count > 0'>"
+                f"<span t-esc='__agg_sum / __agg_count'/>"
+                f"</t></td>"
+            )
+        if aggregate == "count":
+            return (
+                f"<td{td_attr}>"
+                f"<t t-set='__agg_count' t-value='0'/>"
+                f"<t t-foreach='o.{data_source}' t-as='__agg_line'/>"
+                f"<t t-set='__agg_count' t-value='__agg_count + 1'/>"
+                f"<span t-esc='__agg_count'/>"
+                f"</td>"
+            )
+        if aggregate == "min":
+            t_cond = f"__agg_min is None or " f"__agg_line.{field_path} < __agg_min"
+            return (
+                f"<td{td_attr}>"
+                f"<t t-set='__agg_min' t-value='None'/>"
+                f"<t t-foreach='o.{data_source}' t-as='__agg_line'/>"
+                f"<t t-if='{t_cond}'>"
+                f"<t t-set='__agg_min' "
+                f"t-value='__agg_line.{field_path}'/>"
+                f"</t></t>"
+                f"<span t-esc='__agg_min'/>"
+                f"</td>"
+            )
+        if aggregate == "max":
+            t_cond = f"__agg_max is None or " f"__agg_line.{field_path} > __agg_max"
+            return (
+                f"<td{td_attr}>"
+                f"<t t-set='__agg_max' t-value='None'/>"
+                f"<t t-foreach='o.{data_source}' t-as='__agg_line'/>"
+                f"<t t-if='{t_cond}'>"
+                f"<t t-set='__agg_max' "
+                f"t-value='__agg_line.{field_path}'/>"
+                f"</t></t>"
+                f"<span t-esc='__agg_max'/>"
+                f"</td>"
+            )
+        # Fallback: show aggregate label
+        return f"<td{td_attr}>{aggregate.upper()}</td>"

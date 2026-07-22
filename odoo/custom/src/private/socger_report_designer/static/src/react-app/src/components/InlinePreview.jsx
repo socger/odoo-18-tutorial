@@ -1,5 +1,5 @@
 import React, {useState, useCallback, useRef, useEffect} from "react";
-import {previewLayoutHtml} from "../api.jsx";
+import {previewLayoutHtml, fetchRecords} from "../api.jsx";
 
 /**
  * InlinePreview - compact live preview panel for split-view within design mode.
@@ -18,9 +18,40 @@ export default function InlinePreview({elements, targetModel, rpc}) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [autoRefresh, setAutoRefresh] = useState(true);
+    const [records, setRecords] = useState([]);
+    const [selectedRecordId, setSelectedRecordId] = useState(null);
+    const [loadingRecords, setLoadingRecords] = useState(false);
     const iframeRef = useRef(null);
     const debounceRef = useRef(null);
     const seqRef = useRef(0);
+
+    // Fetch records when target model changes
+    useEffect(() => {
+        if (!targetModel) {
+            setRecords([]);
+            setSelectedRecordId(null);
+            return;
+        }
+        let cancelled = false;
+        async function loadRecords() {
+            setLoadingRecords(true);
+            try {
+                const recs = await fetchRecords(targetModel, rpc, 50);
+                if (!cancelled) {
+                    setRecords(recs);
+                    setSelectedRecordId(null);
+                }
+            } catch {
+                if (!cancelled) setRecords([]);
+            } finally {
+                if (!cancelled) setLoadingRecords(false);
+            }
+        }
+        loadRecords();
+        return () => {
+            cancelled = true;
+        };
+    }, [targetModel, rpc]);
 
     const handleRefresh = useCallback(async () => {
         if (!targetModel || !elements || elements.length === 0) {
@@ -35,7 +66,12 @@ export default function InlinePreview({elements, targetModel, rpc}) {
         setError(null);
         try {
             const layoutJson = JSON.stringify({elements});
-            const result = await previewLayoutHtml(layoutJson, targetModel, rpc);
+            const result = await previewLayoutHtml(
+                layoutJson,
+                targetModel,
+                rpc,
+                selectedRecordId
+            );
             // Ignore stale responses
             if (mySeq !== seqRef.current) return;
             if (result.error) {
@@ -51,9 +87,9 @@ export default function InlinePreview({elements, targetModel, rpc}) {
         } finally {
             if (mySeq === seqRef.current) setLoading(false);
         }
-    }, [elements, targetModel, rpc]);
+    }, [elements, targetModel, rpc, selectedRecordId]);
 
-    // Debounced auto-refresh when elements change
+    // Debounced auto-refresh when elements or record change
     useEffect(() => {
         if (!autoRefresh) return;
         if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -63,7 +99,7 @@ export default function InlinePreview({elements, targetModel, rpc}) {
         return () => {
             if (debounceRef.current) clearTimeout(debounceRef.current);
         };
-    }, [elements, autoRefresh, handleRefresh]);
+    }, [elements, autoRefresh, handleRefresh, selectedRecordId]);
 
     // Write HTML into the iframe
     useEffect(() => {
@@ -122,6 +158,34 @@ export default function InlinePreview({elements, targetModel, rpc}) {
                     </button>
                 </div>
             </div>
+
+            {/* Record selector */}
+            {targetModel && (
+                <div className="o_inline_preview_record_selector">
+                    <label className="small text-muted me-1">Record:</label>
+                    <select
+                        className="form-select form-select-sm"
+                        value={selectedRecordId || ""}
+                        onChange={(e) =>
+                            setSelectedRecordId(
+                                e.target.value ? parseInt(e.target.value, 10) : null
+                            )
+                        }
+                    >
+                        <option value="">(first record)</option>
+                        {loadingRecords ? (
+                            <option disabled>Loading...</option>
+                        ) : (
+                            records.map((rec) => (
+                                <option key={rec.id} value={rec.id}>
+                                    {rec.display_name}
+                                </option>
+                            ))
+                        )}
+                    </select>
+                </div>
+            )}
+
             {error && (
                 <div className="o_inline_preview_error small">
                     <i className="fa fa-exclamation-triangle me-1" />

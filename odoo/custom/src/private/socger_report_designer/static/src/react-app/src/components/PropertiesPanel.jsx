@@ -56,6 +56,12 @@ export default function PropertiesPanel({
         onUpdateElement(element.id, {condition: e.target.value});
     }
 
+    function handleTableStyleChange(key, value) {
+        onUpdateElement(element.id, {
+            tableStyle: {...(element.tableStyle || {}), [key]: value},
+        });
+    }
+
     const elementTypes = [
         {value: "text", label: "Text / Field"},
         {value: "heading", label: "Heading"},
@@ -72,8 +78,25 @@ export default function PropertiesPanel({
     const supportsContent = ["text", "heading"].includes(element.type);
     const supportsLevel = element.type === "heading";
 
-    // Find O2M fields for table data source
-    const o2mFields = fields.filter((f) => f.type === "one2many");
+    // Find O2M and M2M fields for table data source
+    const relationFields = fields.filter(
+        (f) => f.type === "one2many" || f.type === "many2many"
+    );
+
+    // Field format options for t-field rendering
+    const fieldFormats = [
+        {value: "", label: "Default (auto)"},
+        {value: "monetary", label: "Monetary"},
+        {value: "date", label: "Date"},
+        {value: "datetime", label: "Datetime"},
+        {value: "float_time", label: "Float (time)"},
+        {value: "float", label: "Float (decimal)"},
+        {value: "integer", label: "Integer"},
+        {value: "char", label: "Text"},
+        {value: "html", label: "HTML"},
+        {value: "selection", label: "Selection"},
+        {value: "many2one", label: "Many2one (name)"},
+    ];
 
     return (
         <div className="o_properties_panel">
@@ -120,6 +143,43 @@ export default function PropertiesPanel({
                                 />
                             </div>
                         </div>
+                        {/* Width / Height */}
+                        <div className="o_properties_field_row">
+                            <div className="o_properties_field o_properties_field_half">
+                                <label>Width (px)</label>
+                                <input
+                                    type="number"
+                                    className="form-control form-control-sm"
+                                    value={element.style?.width || ""}
+                                    onChange={(e) =>
+                                        handleStyleChange(
+                                            "width",
+                                            e.target.value
+                                                ? parseInt(e.target.value, 10)
+                                                : undefined
+                                        )
+                                    }
+                                    placeholder="auto"
+                                />
+                            </div>
+                            <div className="o_properties_field o_properties_field_half">
+                                <label>Height (px)</label>
+                                <input
+                                    type="number"
+                                    className="form-control form-control-sm"
+                                    value={element.style?.height || ""}
+                                    onChange={(e) =>
+                                        handleStyleChange(
+                                            "height",
+                                            e.target.value
+                                                ? parseInt(e.target.value, 10)
+                                                : undefined
+                                        )
+                                    }
+                                    placeholder="auto"
+                                />
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -152,6 +212,32 @@ export default function PropertiesPanel({
                             {fields.map((f) => (
                                 <option key={f.name} value={f.name}>
                                     {f.string} ({f.type})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {/* Field format (when a field is bound) */}
+                {supportsField && element.fieldPath && (
+                    <div className="o_properties_field">
+                        <label>
+                            Field Format{" "}
+                            <small className="text-muted">(t-field widget)</small>
+                        </label>
+                        <select
+                            className="form-select form-select-sm"
+                            value={element.style?.fieldFormat || ""}
+                            onChange={(e) =>
+                                handleStyleChange(
+                                    "fieldFormat",
+                                    e.target.value || undefined
+                                )
+                            }
+                        >
+                            {fieldFormats.map((fmt) => (
+                                <option key={fmt.value} value={fmt.value}>
+                                    {fmt.label}
                                 </option>
                             ))}
                         </select>
@@ -195,7 +281,7 @@ export default function PropertiesPanel({
                 {element.type === "table" && (
                     <>
                         <div className="o_properties_field">
-                            <label>Data Source (O2M field)</label>
+                            <label>Data Source (O2M / M2M field)</label>
                             <select
                                 className="form-select form-select-sm"
                                 value={element.dataSource || ""}
@@ -206,14 +292,108 @@ export default function PropertiesPanel({
                                     })
                                 }
                             >
-                                <option value="">-- Select O2M field --</option>
-                                {o2mFields.map((f) => (
+                                <option value="">-- Select O2M / M2M field --</option>
+                                {relationFields.map((f) => (
                                     <option key={f.name} value={f.name}>
-                                        {f.string} ({f.name})
+                                        {f.string} ({f.name}) [{f.type}]
                                     </option>
                                 ))}
                             </select>
                         </div>
+
+                        {/* Table header styling */}
+                        {element.dataSource && (
+                            <div className="o_properties_section">
+                                <h5>Table Style</h5>
+                                <div className="o_properties_field">
+                                    <label>Header Background</label>
+                                    <input
+                                        type="color"
+                                        className="form-control form-control-sm form-control-color"
+                                        value={
+                                            element.tableStyle?.headerBgColor ||
+                                            "#e9ecef"
+                                        }
+                                        onChange={(e) =>
+                                            handleTableStyleChange(
+                                                "headerBgColor",
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+                                </div>
+                                <div className="o_properties_field">
+                                    <label>Header Font Size (px)</label>
+                                    <input
+                                        type="number"
+                                        className="form-control form-control-sm"
+                                        value={element.tableStyle?.headerFontSize || 10}
+                                        onChange={(e) =>
+                                            handleTableStyleChange(
+                                                "headerFontSize",
+                                                parseInt(e.target.value, 10) || 10
+                                            )
+                                        }
+                                    />
+                                </div>
+                                <div className="o_properties_field">
+                                    <label className="o_properties_checkbox">
+                                        <input
+                                            type="checkbox"
+                                            checked={
+                                                element.tableStyle?.zebraStriping !==
+                                                false
+                                            }
+                                            onChange={(e) =>
+                                                handleTableStyleChange(
+                                                    "zebraStriping",
+                                                    e.target.checked
+                                                )
+                                            }
+                                        />
+                                        <span className="ms-1">Zebra striping</span>
+                                    </label>
+                                </div>
+                                <div className="o_properties_field">
+                                    <label className="o_properties_checkbox">
+                                        <input
+                                            type="checkbox"
+                                            checked={
+                                                element.tableStyle?.showFooter === true
+                                            }
+                                            onChange={(e) =>
+                                                handleTableStyleChange(
+                                                    "showFooter",
+                                                    e.target.checked
+                                                )
+                                            }
+                                        />
+                                        <span className="ms-1">
+                                            Show footer / totals
+                                        </span>
+                                    </label>
+                                </div>
+                                <div className="o_properties_field">
+                                    <label className="o_properties_checkbox">
+                                        <input
+                                            type="checkbox"
+                                            checked={
+                                                element.tableStyle?.showBorders !==
+                                                false
+                                            }
+                                            onChange={(e) =>
+                                                handleTableStyleChange(
+                                                    "showBorders",
+                                                    e.target.checked
+                                                )
+                                            }
+                                        />
+                                        <span className="ms-1">Table borders</span>
+                                    </label>
+                                </div>
+                            </div>
+                        )}
+
                         {element.dataSource && (
                             <div className="o_properties_section">
                                 <TableEditorPanel
