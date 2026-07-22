@@ -1,11 +1,11 @@
-import React, {useRef} from "react";
+import React, {useRef, memo} from "react";
 import {useDrag, useDrop} from "react-dnd";
 
 /**
  * A single element on the canvas. Supports click-to-select,
  * drag-to-reorder, and inline editing.
  */
-export default function CanvasElement({
+export default memo(function CanvasElement({
     element,
     index,
     isSelected,
@@ -152,7 +152,7 @@ export default function CanvasElement({
             )}
         </div>
     );
-}
+});
 
 function buildStyle(s) {
     const style = {};

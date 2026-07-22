@@ -191,12 +191,19 @@ export function createTablePlaceholder(element, pos, style) {
 
     // Header background
     const headerBg = tableStyle.headerBgColor || "#e9ecef";
+    const headerColor = tableStyle.headerColor || "#495057";
+    const headerFontSize = parseInt(tableStyle.headerFontSize, 10) || 10;
+    const headerFontWeight = tableStyle.headerFontWeight || "bold";
+    const borderColor = tableStyle.borderColor || "#6f42c1";
+    const evenRowBg = tableStyle.evenRowBg || "#ffffff";
+    const oddRowBg = tableStyle.oddRowBg || "#f8f9fa";
+
     objects.push(
         new fabric.Rect({
             width: tableWidth,
             height: headerHeight,
             fill: headerBg,
-            stroke: "#6f42c1",
+            stroke: borderColor,
             strokeWidth: 1,
             originX: "left",
             originY: "top",
@@ -210,7 +217,7 @@ export function createTablePlaceholder(element, pos, style) {
         objects.push(
             new fabric.Text(`Table: ${ds} — add columns`, {
                 fontSize: 11,
-                fill: "#6f42c1",
+                fill: headerColor,
                 left: 8,
                 top: 6,
                 fontFamily: "sans-serif",
@@ -221,9 +228,9 @@ export function createTablePlaceholder(element, pos, style) {
             const headerText = col.header || col.fieldPath || `Col ${i + 1}`;
             objects.push(
                 new fabric.Text(String(headerText).slice(0, 20), {
-                    fontSize: parseInt(tableStyle.headerFontSize, 10) || 10,
-                    fontWeight: "bold",
-                    fill: "#495057",
+                    fontSize: headerFontSize,
+                    fontWeight: headerFontWeight,
+                    fill: headerColor,
                     left: i * colWidth + 6,
                     top: 7,
                     fontFamily: "sans-serif",
@@ -233,7 +240,7 @@ export function createTablePlaceholder(element, pos, style) {
             if (i > 0) {
                 objects.push(
                     new fabric.Line([i * colWidth, 0, i * colWidth, headerHeight], {
-                        stroke: "#ced4da",
+                        stroke: borderColor,
                         strokeWidth: 1,
                         originX: "left",
                         originY: "top",
@@ -245,15 +252,15 @@ export function createTablePlaceholder(element, pos, style) {
         });
     }
 
-    // Empty body row (sample) with optional zebra
+    // Empty body row (sample) with zebra
     const bodyHeight = rowHeight;
-    const zebraFill = tableStyle.zebraStriping === false ? "transparent" : "#f8f9fa";
+    const zebraFill = tableStyle.zebraStriping === false ? "transparent" : oddRowBg;
     objects.push(
         new fabric.Rect({
             width: tableWidth,
             height: bodyHeight,
             fill: zebraFill,
-            stroke: "#6f42c1",
+            stroke: borderColor,
             strokeWidth: 1,
             originX: "left",
             originY: "top",
@@ -261,8 +268,26 @@ export function createTablePlaceholder(element, pos, style) {
             top: headerHeight,
         })
     );
+    // Second sample row to show zebra effect
+    if (tableStyle.zebraStriping !== false) {
+        objects.push(
+            new fabric.Rect({
+                width: tableWidth,
+                height: bodyHeight,
+                fill: evenRowBg || "transparent",
+                stroke: borderColor,
+                strokeWidth: 1,
+                originX: "left",
+                originY: "top",
+                left: 0,
+                top: headerHeight + bodyHeight,
+            })
+        );
+    }
+    const totalBodyRows = tableStyle.zebraStriping !== false ? 2 : 1;
     columns.forEach((col, i) => {
         const placeholder = col.fieldPath ? `t-field: line.${col.fieldPath}` : "...";
+        // First row
         objects.push(
             new fabric.Text(`[${placeholder}]`, {
                 fontSize: 9,
@@ -280,10 +305,10 @@ export function createTablePlaceholder(element, pos, style) {
                         i * colWidth,
                         headerHeight,
                         i * colWidth,
-                        headerHeight + bodyHeight,
+                        headerHeight + bodyHeight * totalBodyRows,
                     ],
                     {
-                        stroke: "#e9ecef",
+                        stroke: borderColor,
                         strokeWidth: 1,
                         originX: "left",
                         originY: "top",
@@ -297,13 +322,13 @@ export function createTablePlaceholder(element, pos, style) {
 
     // Footer row indicator
     if (tableStyle.showFooter) {
-        const footerY = headerHeight + bodyHeight;
+        const footerY = headerHeight + bodyHeight * totalBodyRows;
         objects.push(
             new fabric.Rect({
                 width: tableWidth,
                 height: 20,
-                fill: "#e9ecef",
-                stroke: "#6f42c1",
+                fill: headerBg,
+                stroke: borderColor,
                 strokeWidth: 1,
                 originX: "left",
                 originY: "top",
@@ -315,7 +340,7 @@ export function createTablePlaceholder(element, pos, style) {
             new fabric.Text("Totals", {
                 fontSize: 9,
                 fontWeight: "bold",
-                fill: "#495057",
+                fill: headerColor,
                 left: 6,
                 top: footerY + 5,
                 fontFamily: "sans-serif",
@@ -330,12 +355,12 @@ export function createTablePlaceholder(element, pos, style) {
             fontSize: 9,
             fill: "#6f42c1",
             left: 0,
-            top: headerHeight + bodyHeight + footerOffset + 4,
+            top: headerHeight + bodyHeight * totalBodyRows + footerOffset + 4,
             fontFamily: "sans-serif",
         })
     );
 
-    const totalHeight = headerHeight + bodyHeight + 18 + footerOffset;
+    const totalHeight = headerHeight + bodyHeight * totalBodyRows + 18 + footerOffset;
 
     return new fabric.Group(objects, {
         left: pos.x,

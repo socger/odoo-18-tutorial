@@ -8,6 +8,58 @@ from odoo.exceptions import UserError
 _logger = logging.getLogger(__name__)
 
 
+# Paper format/orientation → report.paperformat XML-ID mapping.
+# A4 Portrait uses Odoo's built-in ``base.paperformat_euro``.
+_PAPER_FORMAT_MAP = {
+    ("a4", "portrait"): "base.paperformat_euro",
+    ("a4", "landscape"): "socger_report_designer.paperformat_a4_landscape",
+    ("letter", "portrait"): "socger_report_designer.paperformat_letter_portrait",
+    ("letter", "landscape"): "socger_report_designer.paperformat_letter_landscape",
+    ("legal", "portrait"): "socger_report_designer.paperformat_legal_portrait",
+    ("legal", "landscape"): "socger_report_designer.paperformat_legal_landscape",
+    ("a3", "portrait"): "socger_report_designer.paperformat_a3_portrait",
+    ("a3", "landscape"): "socger_report_designer.paperformat_a3_landscape",
+}
+
+# Dimensions in mm for @page CSS overrides (width, height).
+_PAPER_SIZE_MM = {
+    "a4": (210, 297),
+    "letter": (216, 279),
+    "legal": (216, 356),
+    "a3": (297, 420),
+}
+
+
+def _resolve_paper_format(env, paper_format, paper_orientation):
+    """Resolve paper_format + orientation to a ``report.paperformat`` record.
+
+    Works without needing a record on ``report.designer.layout``.
+    Falls back to ``base.paperformat_euro`` when no mapping is found.
+    """
+    key = (paper_format, paper_orientation)
+    xml_id = _PAPER_FORMAT_MAP.get(key, "base.paperformat_euro")
+    return env.ref(xml_id, raise_if_not_found=False) or env.ref("base.paperformat_euro")
+
+
+def _build_page_css(env, paper_format, paper_orientation, paper_format_id=None):
+    """Return ``@page`` CSS string for the given paper format.
+
+    Works at module / model level without needing a layout record.
+    """
+    pf = paper_format_id or _resolve_paper_format(env, paper_format, paper_orientation)
+    w_mm, h_mm = _PAPER_SIZE_MM.get(paper_format, (210, 297))
+    if paper_orientation == "landscape":
+        w_mm, h_mm = h_mm, w_mm
+    # Margins in mm from the paperformat record
+    mt = pf.margin_top or 40
+    mb = pf.margin_bottom or 20
+    ml = pf.margin_left or 7
+    mr = pf.margin_right or 7
+    return (
+        f"@page {{ size: {w_mm}mm {h_mm}mm; " f"margin: {mt}mm {mr}mm {mb}mm {ml}mm; }}"
+    )
+
+
 class ReportDesignerLayout(models.Model):
     _name = "report.designer.layout"
     _description = "Report Designer Layout"
@@ -167,6 +219,32 @@ class ReportDesignerLayout(models.Model):
                     json.loads(record.layout_json)
                 except json.JSONDecodeError as e:
                     raise UserError(_("Invalid JSON in layout: %s", str(e))) from e
+
+    # === PAPER FORMAT RESOLUTION === #
+
+    def _resolve_paper_format_id(self):
+        """Resolve paper_format + paper_orientation to a ``report.paperformat`` record.
+
+        Falls back to ``base.paperformat_euro`` when no mapping is found.
+        """
+        self.ensure_one()
+        return _resolve_paper_format(
+            self.env, self.paper_format, self.paper_orientation
+        )
+
+    def _page_css(self):
+        """Return ``@page`` CSS string derived from the paper format.
+
+        This is injected into QWeb templates so wkhtmltopdf renders with the
+        correct page dimensions and margins.
+        """
+        self.ensure_one()
+        return _build_page_css(
+            self.env,
+            self.paper_format,
+            self.paper_orientation,
+            self.paper_format_id,
+        )
 
     # === CRUD METHODS === #
     @api.model_create_multi
@@ -361,6 +439,13 @@ class ReportDesignerLayout(models.Model):
         """Generate QWeb XML template from layout JSON."""
         body_content = self._build_body_content(record)
 
+        # Auto-resolve paper format if not set
+        if not record.paper_format_id:
+            record.paper_format_id = record._resolve_paper_format_id()
+
+        # Build @page CSS for paper dimensions and margins
+        page_css = record._page_css()
+
         # Build complete QWeb template
         template_xml_id = (
             f"socger_report_designer.template_report_designer_layout_{record.id}"
@@ -370,6 +455,7 @@ class ReportDesignerLayout(models.Model):
         <t t-foreach="docs" t-as="o">
             <t t-call="web.external_layout">
                 <div class="page">
+                    <style>{page_css}</style>
                     {body_content}
                 </div>
             </t>
@@ -380,7 +466,9 @@ class ReportDesignerLayout(models.Model):
         self._validate_xml(template_xml)
         return template_xml
 
-    def generate_preview_qweb(self, layout_json):
+    def generate_preview_qweb(
+        self, layout_json, paper_format="a4", paper_orientation="portrait"
+    ):
         """Generate QWeb XML from layout JSON without persisting to ir.ui.view.
 
         Used by the live-preview endpoint so the user can preview without
@@ -402,11 +490,19 @@ class ReportDesignerLayout(models.Model):
 
         body_content = "\n".join(xml_elements) if xml_elements else "<p>No content</p>"
 
+        # Resolve paper format for preview (model-level, no record needed).
+        # Priority: layout JSON style > explicit params > defaults (A4 portrait).
+        style = layout.get("style", {})
+        pf_name = style.get("paperFormat", paper_format)
+        pf_orient = style.get("paperOrientation", paper_orientation)
+        page_css = _build_page_css(self.env, pf_name, pf_orient)
+
         return f"""<template>
     <t t-call="web.html_container">
         <t t-foreach="docs" t-as="o">
             <t t-call="web.external_layout">
                 <div class="page">
+                    <style>{page_css}</style>
                     {body_content}
                 </div>
             </t>
@@ -662,8 +758,9 @@ class ReportDesignerLayout(models.Model):
             - dataSource: O2M or M2M field name to iterate over
             - columns: list of {header, fieldPath, fieldType, align, width, aggregate}
             - style: optional table-level styling
-            - tableStyle: {headerBgColor, headerFontSize, zebraStriping,
-                          showFooter, showBorders}
+            - tableStyle: {headerBgColor, headerFontSize, headerColor,
+                          headerFontWeight, zebraStriping, evenRowBg,
+                          oddRowBg, showFooter, showBorders, borderColor}
         """
         data_source = element.get("dataSource", "")
         columns = element.get("columns", [])
@@ -677,6 +774,7 @@ class ReportDesignerLayout(models.Model):
 
         # Table CSS classes
         table_classes = "table"
+        border_color = t_style.get("borderColor", "")
         if t_style.get("showBorders", True):
             table_classes += " table-bordered"
         else:
@@ -686,9 +784,17 @@ class ReportDesignerLayout(models.Model):
         # Header styling
         header_bg = t_style.get("headerBgColor", "#e9ecef")
         header_font_size = t_style.get("headerFontSize", 10)
+        header_color = t_style.get("headerColor", "#495057")
+        header_font_weight = t_style.get("headerFontWeight", "bold")
         header_style = (
             f"background-color: {header_bg}; font-size: {header_font_size}px;"
+            f" color: {header_color}; font-weight: {header_font_weight};"
         )
+
+        # Zebra striping colours
+        zebra_enabled = t_style.get("zebraStriping", True)
+        even_row_bg = t_style.get("evenRowBg", "")
+        odd_row_bg = t_style.get("oddRowBg", "#f8f9fa")
 
         # Build header cells
         header_cells = []
@@ -702,7 +808,7 @@ class ReportDesignerLayout(models.Model):
             header_cells.append(f'<th style="{header_style}">{safe}</th>')
         header_row = "<tr>\n" + "\n".join(header_cells) + "\n</tr>"
 
-        # Build body row template
+        # Build body row template — uses CSS class for zebra striping
         body_cells = []
         for col in columns:
             field_path = col.get("fieldPath", "")
@@ -713,6 +819,8 @@ class ReportDesignerLayout(models.Model):
                 td_style_parts.append(f"text-align: {align}")
             if width:
                 td_style_parts.append(f"width: {width}")
+            if border_color:
+                td_style_parts.append(f"border-color: {border_color}")
             td_attr = f' style="{"; ".join(td_style_parts)}"' if td_style_parts else ""
             if field_path:
                 body_cells.append(
@@ -723,22 +831,57 @@ class ReportDesignerLayout(models.Model):
 
         body_row = "<tr>\n" + "\n".join(body_cells) + "\n</tr>"
 
+        # Body loop with optional zebra via CSS :nth-child
+        if zebra_enabled and (even_row_bg or odd_row_bg):
+            # Generate a unique CSS class for this table's zebra colours
+            zebra_cls = f"zebra_{abs(hash(data_source)) % 10000:04d}"
+            body_loop = (
+                f'<t t-foreach="o.{data_source}" t-as="line">\n'
+                f"            {body_row}\n"
+                f"        </t>"
+            )
+            # Append a <style> block for the zebra colours
+            even_bg = even_row_bg or "transparent"
+            odd_bg = odd_row_bg or "transparent"
+            body_loop += (
+                f"\n<style>\n"
+                f"  .{zebra_cls} > tbody > tr:nth-child(odd) > td "
+                f"{{ background-color: {odd_bg}; }}\n"
+                f"  .{zebra_cls} > tbody > tr:nth-child(even) > td "
+                f"{{ background-color: {even_bg}; }}\n"
+                f"</style>"
+            )
+        else:
+            zebra_cls = ""
+            body_loop = (
+                f'<t t-foreach="o.{data_source}" t-as="line">\n'
+                f"            {body_row}\n"
+                f"        </t>"
+            )
+
         # Build optional footer row with aggregates
         footer_row = ""
         if t_style.get("showFooter", False):
             footer_row = self._build_table_footer(columns, data_source, table_attr)
 
-        return f"""<table class="{table_classes}"{table_attr}>
-    <thead>
-        {header_row}
-    </thead>
-    {footer_row}
-    <tbody>
-        <t t-foreach="o.{data_source}" t-as="line">
-            {body_row}
-        </t>
-    </tbody>
-</table>"""
+        # Table border style attribute
+        table_border_attr = ""
+        if border_color:
+            table_border_attr = f' style="border-color: {border_color};"'
+
+        zebra_extra = f" {zebra_cls}" if zebra_cls else ""
+        return (
+            f'<table class="{table_classes}{zebra_extra}"'
+            f"{table_attr}{table_border_attr}>\n"
+            f"    <thead>\n"
+            f"        {header_row}\n"
+            f"    </thead>\n"
+            f"    {footer_row}\n"
+            f"    <tbody>\n"
+            f"        {body_loop}\n"
+            f"    </tbody>\n"
+            f"</table>"
+        )
 
     def _build_table_footer(self, columns, data_source, _table_attr):
         """Build QWeb ``<tfoot>`` row for table aggregate columns."""

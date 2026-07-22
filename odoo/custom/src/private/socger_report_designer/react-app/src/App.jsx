@@ -9,6 +9,7 @@ import LayoutManager from "./components/LayoutManager.jsx";
 import Preview from "./components/Preview.jsx";
 import InlinePreview from "./components/InlinePreview.jsx";
 import useCanvasHistory from "./hooks/useCanvasHistory.js";
+import {useToast} from "./hooks/useToast.js";
 import {
     fetchModels,
     fetchFields,
@@ -34,13 +35,14 @@ export default function App({layoutId, backendRpc}) {
     const [selectedId, setSelectedId] = useState(null);
     const [targetModel, setTargetModel] = useState("");
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
     // View mode: "design" (canvas) or "preview" (live preview)
     const [viewMode, setViewMode] = useState("design");
     // Preview refresh counter — bump to force Preview re-render
     const [previewKey, setPreviewKey] = useState(0);
     // Inline preview toggle within design mode (split-view)
     const [showInlinePreview, setShowInlinePreview] = useState(false);
+    // Toast notifications
+    const {showToast, ToastContainer} = useToast();
 
     // Elements managed via undo/redo history hook
     const {elements, push, undo, redo, canUndo, canRedo} = useCanvasHistory([]);
@@ -67,7 +69,7 @@ export default function App({layoutId, backendRpc}) {
             setModels(modelsData);
             setLayouts(layoutsData);
         } catch (err) {
-            setError(err.message);
+            showToast(err.message, "error");
         } finally {
             setLoading(false);
         }
@@ -85,8 +87,9 @@ export default function App({layoutId, backendRpc}) {
             // Load fields for the target model
             const fieldsData = await fetchFields(layout.target_model, rpc);
             setFields(fieldsData);
+            showToast(`Loaded "${layout.name}"`, "success");
         } catch (err) {
-            setError(err.message);
+            showToast(err.message, "error");
         } finally {
             setLoading(false);
         }
@@ -102,7 +105,7 @@ export default function App({layoutId, backendRpc}) {
             const fieldsData = await fetchFields(modelName, rpc);
             setFields(fieldsData);
         } catch (err) {
-            setError(err.message);
+            showToast(err.message, "error");
         } finally {
             setLoading(false);
         }
@@ -155,9 +158,9 @@ export default function App({layoutId, backendRpc}) {
             const rpc = backendRpc || defaultRpc;
             const layoutJson = JSON.stringify({elements});
             await saveLayout(currentLayout.id, layoutJson, currentLayout.name, rpc);
-            setError(null);
+            showToast("Layout saved", "success");
         } catch (err) {
-            setError(err.message);
+            showToast(err.message, "error");
         } finally {
             setLoading(false);
         }
@@ -174,13 +177,13 @@ export default function App({layoutId, backendRpc}) {
             await saveLayout(currentLayout.id, layoutJson, currentLayout.name, rpc);
             const result = await publishLayout(currentLayout.id, rpc);
             if (result.error) {
-                setError(result.error);
+                showToast(result.error, "error");
                 return;
             }
             setCurrentLayout((prev) => ({...prev, state: result.state}));
-            setError(null);
+            showToast("Report published", "success");
         } catch (err) {
-            setError(err.message);
+            showToast(err.message, "error");
         } finally {
             setLoading(false);
         }
@@ -193,13 +196,13 @@ export default function App({layoutId, backendRpc}) {
             const rpc = backendRpc || defaultRpc;
             const result = await unpublishLayout(currentLayout.id, rpc);
             if (result.error) {
-                setError(result.error);
+                showToast(result.error, "error");
                 return;
             }
             setCurrentLayout((prev) => ({...prev, state: result.state}));
-            setError(null);
+            showToast("Report unpublished", "info");
         } catch (err) {
-            setError(err.message);
+            showToast(err.message, "error");
         } finally {
             setLoading(false);
         }
@@ -299,12 +302,7 @@ export default function App({layoutId, backendRpc}) {
                         </div>
                     )}
                 </div>
-                {error && (
-                    <div className="o_report_designer_error">
-                        <span>{error}</span>
-                        <button onClick={() => setError(null)}>Dismiss</button>
-                    </div>
-                )}
+                <ToastContainer />
             </div>
         </DndProvider>
     );

@@ -1,0 +1,128 @@
+# Usage
+
+The **Visual Report Designer** allows you to create QWeb/PDF reports for any Odoo model
+using a visual drag-and-drop interface, without writing XML by hand.
+
+## Getting Started
+
+1. Install the module `socger_report_designer` from **Apps**.
+2. Navigate to **Reporting > Visual Designer** in the main menu.
+3. Select a **target model** (e.g. `sale.order`, `res.partner`) from the dropdown.
+4. Design your report on the canvas (see steps below).
+5. **Save** and **Publish** when ready.
+
+## Creating a Report Layout
+
+### Step 1: Choose a Model
+
+Select the Odoo model whose records you want to print. The left sidebar shows all fields
+available on that model, grouped by type (basic, numeric, date, relation, etc.).
+
+### Step 2: Drag Fields onto the Canvas
+
+- **Drag a field** from the sidebar and drop it onto the A4 paper canvas.
+- **Double-click** a field to add it at position (0, 0).
+- Use the **Layout Elements** section for structural elements: headings, horizontal
+  lines, spacers, page breaks, tables, and containers.
+
+### Step 3: Position and Style Elements
+
+Click any element on the canvas to select it. The **Properties panel** (right sidebar)
+shows:
+
+- **Position**: X/Y coordinates in pixels. Width/Height can be set numerically.
+- **Type**: Change element type (text, heading, image, table, etc.).
+- **Field Binding**: Bind a text/image/HTML element to an Odoo field. The report will
+  render the actual field value at print time.
+- **Field Format** (t-field widget): Choose how the field renders — monetary, date,
+  datetime, float, integer, HTML, selection, etc.
+- **Content**: Static text for unbound elements.
+- **Style**: Font size, weight, color, background, alignment, padding, margin, border,
+  opacity, and more.
+- **Condition**: Optional QWeb `t-if` expression (e.g. `o.state == 'done'`).
+
+### Step 4: Tables (One2many / Many2many)
+
+Tables display related record lines (e.g. `order_line` on `sale.order`):
+
+1. Add a **Table** element from Layout Elements.
+2. Select a **Data Source** — any O2M or M2M field from the model.
+3. Configure columns in the **Table Editor**:
+   - Each column has a **header label** and a **field path** from the related model.
+   - Support for nested many2one paths (e.g. `partner_id.name`).
+   - Per-column **aggregate** functions: Sum, Average, Count, Min, Max.
+4. Table styling options:
+   - **Header Background** and **Header Text Color** (color pickers).
+   - **Header Font Weight**: Normal, Bold, or Light.
+   - **Zebra striping** with configurable even/odd row background colors.
+   - **Table borders**: Toggle on/off, with custom border color.
+   - **Footer / totals row**: Toggle aggregate footer row.
+
+### Step 5: Preview
+
+Two preview modes are available:
+
+- **Inline Preview**: Toggle the split-view preview within the design mode. It
+  auto-refreshes as you edit (debounced at 600ms). A **record selector** lets you choose
+  which record to preview.
+- **Full-screen Preview**: Click the Preview button in the toolbar for a full view with
+  its own record selector and manual refresh.
+
+Previews are **cached** client-side (in-memory + sessionStorage) for 5 minutes, so
+revisiting the same layout+record combination is instant.
+
+### Step 6: Save and Publish
+
+- **Save**: Stores the layout JSON in the database. The version number auto-increments
+  on each save after publishing.
+- **Publish**: Creates a QWeb template (`ir.ui.view`) and an `ir.actions.report` in
+  Odoo. The report then appears in the **Print** menu of the target model's views.
+- **Unpublish**: Removes the QWeb template and report action.
+
+## Keyboard Shortcuts
+
+The canvas supports these keyboard shortcuts (when not focused on an input):
+
+- **Ctrl+Z**: Undo
+- **Ctrl+Y** / **Ctrl+Shift+Z**: Redo
+- **Ctrl+C**: Copy selected element
+- **Ctrl+V**: Paste (offset by 20px)
+- **Ctrl+D**: Duplicate selected element
+- **Ctrl+A**: Select all elements
+- **Escape**: Deselect
+- **Delete** / **Backspace**: Remove selected element
+
+## Canvas Features
+
+- **Zoom**: Zoom in/out buttons in the canvas toolbar (25%–300%).
+- **Grid**: Toggle grid visibility (10px grid lines).
+- **Snap to grid**: Toggle snap-to-grid for precise element placement.
+- **Drag and drop**: Elements snap to the 10px grid during drag.
+
+## REST API Endpoints
+
+The module exposes these JSON-RPC endpoints under `/api/report-designer/`:
+
+- `/models` — List available Odoo models.
+- `/fields/<model>` — List fields for a model.
+- `/fields/<model>/related` — List fields for a related model (nested expansion).
+- `/layouts` — List all report layouts.
+- `/layouts/create` — Create a new layout.
+- `/layouts/<id>/save` — Save layout JSON.
+- `/layouts/<id>/publish` — Publish a layout.
+- `/layouts/<id>/unpublish` — Unpublish a layout.
+- `/layouts/<id>/delete` — Delete a layout.
+- `/layouts/<id>/preview` — Preview a published layout.
+- `/generate-xml` — Generate QWeb XML from layout JSON without persisting.
+- `/preview/html` — Live preview as HTML (no publish required).
+- `/preview/live` — Live preview as PDF (no publish required).
+- `/records/<model>` — Fetch records for preview record selector.
+
+## Architecture
+
+- **Backend** (Python): `report.designer.layout` model stores layout definitions as
+  JSON. The publish action generates QWeb XML and registers it as an
+  `ir.actions.report`.
+- **Frontend** (React): Fabric.js-based canvas editor with a properties panel, field
+  picker, and live preview. Built with Vite.
+- **Communication**: JSON-RPC controllers in `controllers/main.py`.

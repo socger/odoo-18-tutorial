@@ -1,5 +1,6 @@
-import React, {useState, useCallback, useRef, useEffect} from "react";
+import React, {useState, useCallback, useRef, useEffect, useMemo} from "react";
 import {previewLayoutHtml, fetchRecords} from "../api.jsx";
+import usePreviewCache from "../hooks/usePreviewCache.js";
 
 /**
  * InlinePreview - compact live preview panel for split-view within design mode.
@@ -24,6 +25,10 @@ export default function InlinePreview({elements, targetModel, rpc}) {
     const iframeRef = useRef(null);
     const debounceRef = useRef(null);
     const seqRef = useRef(0);
+    const cache = usePreviewCache();
+
+    // Stable stringification of elements for cache key
+    const layoutJson = useMemo(() => JSON.stringify({elements}), [elements]);
 
     // Fetch records when target model changes
     useEffect(() => {
@@ -62,10 +67,18 @@ export default function InlinePreview({elements, targetModel, rpc}) {
         }
 
         const mySeq = ++seqRef.current;
+
+        // Check cache first
+        const cached = cache.get(layoutJson, targetModel, selectedRecordId);
+        if (cached) {
+            setHtml(cached);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         setError(null);
         try {
-            const layoutJson = JSON.stringify({elements});
             const result = await previewLayoutHtml(
                 layoutJson,
                 targetModel,
@@ -78,7 +91,9 @@ export default function InlinePreview({elements, targetModel, rpc}) {
                 setError(result.error);
                 setHtml("");
             } else {
-                setHtml(result.html || "");
+                const content = result.html || "";
+                setHtml(content);
+                cache.set(layoutJson, targetModel, selectedRecordId, content);
             }
         } catch (err) {
             if (mySeq !== seqRef.current) return;
@@ -87,7 +102,7 @@ export default function InlinePreview({elements, targetModel, rpc}) {
         } finally {
             if (mySeq === seqRef.current) setLoading(false);
         }
-    }, [elements, targetModel, rpc, selectedRecordId]);
+    }, [elements, targetModel, rpc, selectedRecordId, layoutJson, cache]);
 
     // Debounced auto-refresh when elements or record change
     useEffect(() => {

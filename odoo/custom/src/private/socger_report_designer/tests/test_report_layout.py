@@ -683,3 +683,244 @@ class TestAPIIntegration(TransactionCase):
         self.assertIn("overflow_key", _PREVIEW_CACHE)
         # Clean up
         _PREVIEW_CACHE.clear()
+
+
+@tagged("post_install", "-at_install")
+class TestPaperFormat(TransactionCase):
+    """Tests for paper format resolution and @page CSS generation."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True))
+
+    def test_resolve_a4_portrait(self):
+        """A4 portrait maps to base.paperformat_euro."""
+        layout = self.env["report.designer.layout"].create(
+            {
+                "name": "A4 Portrait Test",
+                "target_model": "res.partner",
+                "paper_format": "a4",
+                "paper_orientation": "portrait",
+                "layout_json": json.dumps({"elements": []}),
+            }
+        )
+        pf = layout._resolve_paper_format_id()
+        self.assertEqual(pf, self.env.ref("base.paperformat_euro"))
+
+    def test_resolve_a4_landscape(self):
+        """A4 landscape maps to custom record."""
+        layout = self.env["report.designer.layout"].create(
+            {
+                "name": "A4 Landscape Test",
+                "target_model": "res.partner",
+                "paper_format": "a4",
+                "paper_orientation": "landscape",
+                "layout_json": json.dumps({"elements": []}),
+            }
+        )
+        pf = layout._resolve_paper_format_id()
+        self.assertEqual(
+            pf,
+            self.env.ref("socger_report_designer.paperformat_a4_landscape"),
+        )
+
+    def test_resolve_letter_portrait(self):
+        """Letter portrait maps to custom record."""
+        layout = self.env["report.designer.layout"].create(
+            {
+                "name": "Letter Portrait Test",
+                "target_model": "res.partner",
+                "paper_format": "letter",
+                "paper_orientation": "portrait",
+                "layout_json": json.dumps({"elements": []}),
+            }
+        )
+        pf = layout._resolve_paper_format_id()
+        self.assertEqual(
+            pf,
+            self.env.ref("socger_report_designer.paperformat_letter_portrait"),
+        )
+
+    def test_resolve_legal_landscape(self):
+        """Legal landscape maps to custom record."""
+        layout = self.env["report.designer.layout"].create(
+            {
+                "name": "Legal Landscape Test",
+                "target_model": "res.partner",
+                "paper_format": "legal",
+                "paper_orientation": "landscape",
+                "layout_json": json.dumps({"elements": []}),
+            }
+        )
+        pf = layout._resolve_paper_format_id()
+        self.assertEqual(
+            pf,
+            self.env.ref("socger_report_designer.paperformat_legal_landscape"),
+        )
+
+    def test_page_css_portrait(self):
+        """@page CSS for portrait has correct dimensions."""
+        layout = self.env["report.designer.layout"].create(
+            {
+                "name": "Page CSS Test",
+                "target_model": "res.partner",
+                "paper_format": "a4",
+                "paper_orientation": "portrait",
+                "layout_json": json.dumps({"elements": []}),
+            }
+        )
+        css = layout._page_css()
+        self.assertIn("@page", css)
+        # A4 portrait: 210mm x 297mm
+        self.assertIn("210mm 297mm", css)
+
+    def test_page_css_landscape(self):
+        """@page CSS for landscape swaps dimensions."""
+        layout = self.env["report.designer.layout"].create(
+            {
+                "name": "Page CSS Landscape Test",
+                "target_model": "res.partner",
+                "paper_format": "a4",
+                "paper_orientation": "landscape",
+                "layout_json": json.dumps({"elements": []}),
+            }
+        )
+        css = layout._page_css()
+        # A4 landscape: 297mm x 210mm
+        self.assertIn("297mm 210mm", css)
+
+    def test_auto_resolve_on_publish(self):
+        """Publishing auto-resolves paper_format_id when not set."""
+        layout = self.env["report.designer.layout"].create(
+            {
+                "name": "Auto Resolve Test",
+                "target_model": "res.partner",
+                "paper_format": "letter",
+                "paper_orientation": "landscape",
+                "paper_format_id": False,
+                "layout_json": json.dumps(
+                    {"elements": [{"type": "text", "content": "Test"}]}
+                ),
+            }
+        )
+        self.assertFalse(layout.paper_format_id)
+        layout.action_publish()
+        self.assertTrue(layout.paper_format_id)
+        self.assertEqual(
+            layout.paper_format_id,
+            self.env.ref("socger_report_designer.paperformat_letter_landscape"),
+        )
+
+    def test_qweb_includes_page_css(self):
+        """Published QWeb template includes @page CSS."""
+        layout = self.env["report.designer.layout"].create(
+            {
+                "name": "Page CSS in QWeb",
+                "target_model": "res.partner",
+                "paper_format": "a4",
+                "paper_orientation": "landscape",
+                "layout_json": json.dumps(
+                    {"elements": [{"type": "text", "content": "With CSS"}]}
+                ),
+            }
+        )
+        layout.action_publish()
+        arch = layout.qweb_template_id.arch
+        self.assertIn("@page", arch)
+        self.assertIn("297mm 210mm", arch)
+
+
+@tagged("post_install", "-at_install")
+class TestTableStyle(TransactionCase):
+    """Tests for table header style, zebra striping, and border color in QWeb."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.env = cls.env(context=dict(cls.env.context, tracking_disable=True))
+
+    def _make_table_element(self, table_style=None):
+        """Helper to create a layout with a table element."""
+        layout = self.env["report.designer.layout"].create(
+            {
+                "name": "Table Style Test",
+                "target_model": "res.partner",
+                "layout_json": json.dumps(
+                    {
+                        "elements": [
+                            {
+                                "type": "table",
+                                "dataSource": "order_line",
+                                "columns": [
+                                    {
+                                        "header": "Product",
+                                        "fieldPath": "name",
+                                        "align": "left",
+                                    },
+                                    {
+                                        "header": "Qty",
+                                        "fieldPath": "product_uom_qty",
+                                        "align": "center",
+                                    },
+                                ],
+                                "tableStyle": table_style or {},
+                            }
+                        ]
+                    }
+                ),
+            }
+        )
+        return layout
+
+    def test_header_color_in_qweb(self):
+        """Header text color is applied in the QWeb output."""
+        layout = self._make_table_element(
+            {"headerBgColor": "#333333", "headerColor": "#ffffff"}
+        )
+        xml = layout.generate_xml_from_json(layout.layout_json)
+        self.assertIn("color: #ffffff", xml)
+        self.assertIn("background-color: #333333", xml)
+
+    def test_header_font_weight_in_qweb(self):
+        """Header font weight is applied in the QWeb output."""
+        layout = self._make_table_element({"headerFontWeight": "normal"})
+        xml = layout.generate_xml_from_json(layout.layout_json)
+        self.assertIn("font-weight: normal", xml)
+
+    def test_zebra_striping_enabled(self):
+        """Zebra striping applies alternating row backgrounds via CSS."""
+        layout = self._make_table_element(
+            {
+                "zebraStriping": True,
+                "evenRowBg": "#ffffff",
+                "oddRowBg": "#f0f0f0",
+            }
+        )
+        xml = layout.generate_xml_from_json(layout.layout_json)
+        # CSS :nth-child is used for alternating row colors
+        self.assertIn(":nth-child(odd)", xml)
+        self.assertIn(":nth-child(even)", xml)
+        self.assertIn("#f0f0f0", xml)
+        self.assertIn("#ffffff", xml)
+
+    def test_zebra_striping_disabled(self):
+        """When zebra striping is off, no alternating styles are generated."""
+        layout = self._make_table_element({"zebraStriping": False})
+        xml = layout.generate_xml_from_json(layout.layout_json)
+        self.assertNotIn(":nth-child", xml)
+
+    def test_border_color_in_qweb(self):
+        """Custom border color is applied to the table."""
+        layout = self._make_table_element(
+            {"showBorders": True, "borderColor": "#ff0000"}
+        )
+        xml = layout.generate_xml_from_json(layout.layout_json)
+        self.assertIn("border-color: #ff0000", xml)
+
+    def test_no_borders_class(self):
+        """Disabling borders adds table-borderless class."""
+        layout = self._make_table_element({"showBorders": False})
+        xml = layout.generate_xml_from_json(layout.layout_json)
+        self.assertIn("table-borderless", xml)
+        self.assertNotIn("table-bordered", xml)

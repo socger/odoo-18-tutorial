@@ -1,4 +1,4 @@
-import React, {useState, useMemo, useCallback} from "react";
+import React, {useState, useMemo, useCallback, memo} from "react";
 import {fetchRelatedFields} from "../api.jsx";
 
 /**
@@ -45,7 +45,7 @@ const STRUCTURAL_ELEMENTS = [
  * ``partner_id.name``) via an inline sub-list that loads related model
  * fields on demand.
  */
-export default function FieldPicker({fields, targetModel, onAddElement, rpc}) {
+export default memo(function FieldPicker({fields, targetModel, onAddElement, rpc}) {
     const [searchTerm, setSearchTerm] = useState("");
     const [filterType, setFilterType] = useState("all");
     const [showStructural, setShowStructural] = useState(true);
@@ -375,7 +375,7 @@ export default function FieldPicker({fields, targetModel, onAddElement, rpc}) {
             )}
         </div>
     );
-}
+});
 
 function getGroupLabel(type) {
     const groups = {

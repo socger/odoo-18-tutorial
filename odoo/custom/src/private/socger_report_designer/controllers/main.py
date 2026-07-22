@@ -532,7 +532,11 @@ class ReportDesignerController(http.Controller):
 
             # Generate QWeb XML on-the-fly
             layout_model = request.env["report.designer.layout"]
-            qweb_xml = layout_model.generate_preview_qweb(layout_json)
+            qweb_xml = layout_model.generate_preview_qweb(
+                layout_json,
+                paper_format=paper_format,
+                paper_orientation=paper_orientation,
+            )
 
             # Create a temporary ir.ui.view with a stable template id
             tmp_view = request.env["ir.ui.view"].create(

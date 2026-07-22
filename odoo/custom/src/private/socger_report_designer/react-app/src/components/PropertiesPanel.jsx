@@ -1,11 +1,11 @@
-import React from "react";
+import React, {memo, useMemo} from "react";
 import TableEditorPanel from "./TableEditorPanel.jsx";
 
 /**
  * PropertiesPanel - right sidebar that shows and edits properties
  * of the currently selected canvas element.
  */
-export default function PropertiesPanel({
+export default memo(function PropertiesPanel({
     element,
     fields,
     rpc,
@@ -62,41 +62,48 @@ export default function PropertiesPanel({
         });
     }
 
-    const elementTypes = [
-        {value: "text", label: "Text / Field"},
-        {value: "heading", label: "Heading"},
-        {value: "html", label: "HTML Block"},
-        {value: "line", label: "Horizontal Line"},
-        {value: "image", label: "Image"},
-        {value: "table", label: "Table"},
-        {value: "spacer", label: "Spacer"},
-        {value: "pagebreak", label: "Page Break"},
-        {value: "container", label: "Container"},
-    ];
+    const elementTypes = useMemo(
+        () => [
+            {value: "text", label: "Text / Field"},
+            {value: "heading", label: "Heading"},
+            {value: "html", label: "HTML Block"},
+            {value: "line", label: "Horizontal Line"},
+            {value: "image", label: "Image"},
+            {value: "table", label: "Table"},
+            {value: "spacer", label: "Spacer"},
+            {value: "pagebreak", label: "Page Break"},
+            {value: "container", label: "Container"},
+        ],
+        []
+    );
 
     const supportsField = ["text", "image", "html"].includes(element.type);
     const supportsContent = ["text", "heading"].includes(element.type);
     const supportsLevel = element.type === "heading";
 
     // Find O2M and M2M fields for table data source
-    const relationFields = fields.filter(
-        (f) => f.type === "one2many" || f.type === "many2many"
+    const relationFields = useMemo(
+        () => fields.filter((f) => f.type === "one2many" || f.type === "many2many"),
+        [fields]
     );
 
     // Field format options for t-field rendering
-    const fieldFormats = [
-        {value: "", label: "Default (auto)"},
-        {value: "monetary", label: "Monetary"},
-        {value: "date", label: "Date"},
-        {value: "datetime", label: "Datetime"},
-        {value: "float_time", label: "Float (time)"},
-        {value: "float", label: "Float (decimal)"},
-        {value: "integer", label: "Integer"},
-        {value: "char", label: "Text"},
-        {value: "html", label: "HTML"},
-        {value: "selection", label: "Selection"},
-        {value: "many2one", label: "Many2one (name)"},
-    ];
+    const fieldFormats = useMemo(
+        () => [
+            {value: "", label: "Default (auto)"},
+            {value: "monetary", label: "Monetary"},
+            {value: "date", label: "Date"},
+            {value: "datetime", label: "Datetime"},
+            {value: "float_time", label: "Float (time)"},
+            {value: "float", label: "Float (decimal)"},
+            {value: "integer", label: "Integer"},
+            {value: "char", label: "Text"},
+            {value: "html", label: "HTML"},
+            {value: "selection", label: "Selection"},
+            {value: "many2one", label: "Many2one (name)"},
+        ],
+        []
+    );
 
     return (
         <div className="o_properties_panel">
@@ -323,6 +330,22 @@ export default function PropertiesPanel({
                                     />
                                 </div>
                                 <div className="o_properties_field">
+                                    <label>Header Text Color</label>
+                                    <input
+                                        type="color"
+                                        className="form-control form-control-sm form-control-color"
+                                        value={
+                                            element.tableStyle?.headerColor || "#495057"
+                                        }
+                                        onChange={(e) =>
+                                            handleTableStyleChange(
+                                                "headerColor",
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+                                </div>
+                                <div className="o_properties_field">
                                     <label>Header Font Size (px)</label>
                                     <input
                                         type="number"
@@ -335,6 +358,26 @@ export default function PropertiesPanel({
                                             )
                                         }
                                     />
+                                </div>
+                                <div className="o_properties_field">
+                                    <label>Header Font Weight</label>
+                                    <select
+                                        className="form-select form-select-sm"
+                                        value={
+                                            element.tableStyle?.headerFontWeight ||
+                                            "bold"
+                                        }
+                                        onChange={(e) =>
+                                            handleTableStyleChange(
+                                                "headerFontWeight",
+                                                e.target.value
+                                            )
+                                        }
+                                    >
+                                        <option value="normal">Normal</option>
+                                        <option value="bold">Bold</option>
+                                        <option value="lighter">Light</option>
+                                    </select>
                                 </div>
                                 <div className="o_properties_field">
                                     <label className="o_properties_checkbox">
@@ -354,6 +397,44 @@ export default function PropertiesPanel({
                                         <span className="ms-1">Zebra striping</span>
                                     </label>
                                 </div>
+                                {element.tableStyle?.zebraStriping !== false && (
+                                    <>
+                                        <div className="o_properties_field">
+                                            <label>Even Row BG</label>
+                                            <input
+                                                type="color"
+                                                className="form-control form-control-sm form-control-color"
+                                                value={
+                                                    element.tableStyle?.evenRowBg ||
+                                                    "#ffffff"
+                                                }
+                                                onChange={(e) =>
+                                                    handleTableStyleChange(
+                                                        "evenRowBg",
+                                                        e.target.value
+                                                    )
+                                                }
+                                            />
+                                        </div>
+                                        <div className="o_properties_field">
+                                            <label>Odd Row BG</label>
+                                            <input
+                                                type="color"
+                                                className="form-control form-control-sm form-control-color"
+                                                value={
+                                                    element.tableStyle?.oddRowBg ||
+                                                    "#f8f9fa"
+                                                }
+                                                onChange={(e) =>
+                                                    handleTableStyleChange(
+                                                        "oddRowBg",
+                                                        e.target.value
+                                                    )
+                                                }
+                                            />
+                                        </div>
+                                    </>
+                                )}
                                 <div className="o_properties_field">
                                     <label className="o_properties_checkbox">
                                         <input
@@ -391,6 +472,25 @@ export default function PropertiesPanel({
                                         <span className="ms-1">Table borders</span>
                                     </label>
                                 </div>
+                                {element.tableStyle?.showBorders !== false && (
+                                    <div className="o_properties_field">
+                                        <label>Border Color</label>
+                                        <input
+                                            type="color"
+                                            className="form-control form-control-sm form-control-color"
+                                            value={
+                                                element.tableStyle?.borderColor ||
+                                                "#dee2e6"
+                                            }
+                                            onChange={(e) =>
+                                                handleTableStyleChange(
+                                                    "borderColor",
+                                                    e.target.value
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -634,4 +734,4 @@ export default function PropertiesPanel({
             </div>
         </div>
     );
-}
+});
