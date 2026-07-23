@@ -1,0 +1,37 @@
+<odoo>
+    <template id="report_concept_cost_budget_sale_family_basic_document">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <div class="page">
+                    <h2
+                    >Categorías - Conceptos de control de costes, presupuestos ó ventas</h2>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Categoría</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="docs" t-as="rec">
+                                <tr>
+                                    <td>
+                                        <span t-field="rec.name" />
+                                    </td>
+                                    <td>
+                                        <span t-field="rec.description" />
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+            <div class="footer">
+                <div t-if="report_type == 'pdf'" class="text-end text-muted">
+                    Página <span class="page" /> / <span class="topage" />
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

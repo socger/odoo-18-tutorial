@@ -19,6 +19,7 @@
         "views/fleet_vehicle_document_views.xml",
         "views/report.xml",
         "views/report_templates.xml",
+        "views/report_basic_templates.xml",
         "views/menu.xml",
     ],
     "assets": {
