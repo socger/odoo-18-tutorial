@@ -20,6 +20,8 @@
         "views/report.xml",
         "views/report_templates.xml",
         "views/report_basic_templates.xml",
+        "views/report_by_vehicle_type_templates.xml",
+        "views/report_by_vehicle_type_basic_templates.xml",
         "views/menu.xml",
     ],
     "assets": {
