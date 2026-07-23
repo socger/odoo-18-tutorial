@@ -1,15 +1,21 @@
 <odoo>
     <record id="report_concept_cost_budget_sale_family" model="ir.actions.report">
-        <field name="name">Listado de Familias</field>
+        <field
+            name="name"
+        >Categorías - Conceptos de control de costes, presupuestos ó ventas</field>
         <field name="model">concept.cost.budget.sale.family</field>
         <field name="report_type">qweb-pdf</field>
+
         <field
             name="report_name"
         >socger_expand_fleet.report_concept_cost_budget_sale_family_document</field>
         <field
             name="report_file"
         >socger_expand_fleet.report_concept_cost_budget_sale_family_document</field>
-        <field name="print_report_name">'Listado de Familias'</field>
+
+        <field
+            name="print_report_name"
+        >'Categorías - Conceptos de control de costes, presupuestos ó ventas'</field>
         <field name="binding_model_id" ref="model_concept_cost_budget_sale_family" />
         <field name="binding_type">report</field>
         <field name="paperformat_id" ref="base.paperformat_euro" />
