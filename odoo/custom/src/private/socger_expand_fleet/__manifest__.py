@@ -17,6 +17,7 @@
         "views/vehicle_feature_views.xml",
         "views/vehicle_feature_by_vehicle_views.xml",
         "views/fleet_vehicle_document_views.xml",
+        "views/report.xml",
         "views/menu.xml",
     ],
     "assets": {

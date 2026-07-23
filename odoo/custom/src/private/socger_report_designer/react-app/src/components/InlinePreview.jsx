@@ -74,8 +74,14 @@ export default function InlinePreview({
 
         const mySeq = ++seqRef.current;
 
-        // Check cache first
-        const cached = cache.get(layoutJson, targetModel, selectedRecordId);
+        // Check cache first (includes paper format/orientation in key)
+        const cached = cache.get(
+            layoutJson,
+            targetModel,
+            selectedRecordId,
+            paperFormat,
+            paperOrientation
+        );
         if (cached) {
             setHtml(cached);
             setLoading(false);
@@ -101,7 +107,14 @@ export default function InlinePreview({
             } else {
                 const content = result.html || "";
                 setHtml(content);
-                cache.set(layoutJson, targetModel, selectedRecordId, content);
+                cache.set(
+                    layoutJson,
+                    targetModel,
+                    selectedRecordId,
+                    content,
+                    paperFormat,
+                    paperOrientation
+                );
             }
         } catch (err) {
             if (mySeq !== seqRef.current) return;

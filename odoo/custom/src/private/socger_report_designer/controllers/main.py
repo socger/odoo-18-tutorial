@@ -276,6 +276,8 @@ class ReportDesignerController(http.Controller):
             vals["paper_orientation"] = paper_orientation
 
         layout.write(vals)
+        # Invalidate preview cache so subsequent previews use fresh data
+        _PREVIEW_CACHE.clear()
         return {"success": True, "version": layout.version}
 
     @http.route(

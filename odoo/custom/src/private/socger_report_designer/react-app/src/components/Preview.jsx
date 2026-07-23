@@ -77,8 +77,14 @@ export default function Preview({
 
         const mySeq = ++seqRef.current;
 
-        // Check cache first
-        const cached = cache.get(layoutJson, targetModel, selectedRecordId);
+        // Check cache first (includes paper format/orientation in key)
+        const cached = cache.get(
+            layoutJson,
+            targetModel,
+            selectedRecordId,
+            paperFormat,
+            paperOrientation
+        );
         if (cached) {
             setHtml(cached);
             setLastRendered(new Date());
@@ -105,7 +111,14 @@ export default function Preview({
                 const content = result.html || "";
                 setHtml(content);
                 setLastRendered(new Date());
-                cache.set(layoutJson, targetModel, selectedRecordId, content);
+                cache.set(
+                    layoutJson,
+                    targetModel,
+                    selectedRecordId,
+                    content,
+                    paperFormat,
+                    paperOrientation
+                );
             }
         } catch (err) {
             if (mySeq !== seqRef.current) return;
