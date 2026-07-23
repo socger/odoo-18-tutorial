@@ -1,7 +1,7 @@
 {
     "name": "Visual Report Designer",
     "summary": "Drag & drop visual report builder for Odoo with React frontend",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.2.0",
     "category": "Technical",
     "website": "https://cuidamet.duckdns.org/",
     "author": "Galvintec, SocGer",

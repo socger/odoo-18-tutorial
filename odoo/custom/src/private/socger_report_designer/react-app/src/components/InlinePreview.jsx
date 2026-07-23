@@ -14,7 +14,13 @@ import usePreviewCache from "../hooks/usePreviewCache.js";
  *   targetModel – selected Odoo model name
  *   rpc         – backend RPC function
  */
-export default function InlinePreview({elements, targetModel, rpc}) {
+export default function InlinePreview({
+    elements,
+    targetModel,
+    rpc,
+    paperFormat,
+    paperOrientation,
+}) {
     const [html, setHtml] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -83,7 +89,9 @@ export default function InlinePreview({elements, targetModel, rpc}) {
                 layoutJson,
                 targetModel,
                 rpc,
-                selectedRecordId
+                selectedRecordId,
+                paperFormat,
+                paperOrientation
             );
             // Ignore stale responses
             if (mySeq !== seqRef.current) return;
@@ -102,7 +110,16 @@ export default function InlinePreview({elements, targetModel, rpc}) {
         } finally {
             if (mySeq === seqRef.current) setLoading(false);
         }
-    }, [elements, targetModel, rpc, selectedRecordId, layoutJson, cache]);
+    }, [
+        elements,
+        targetModel,
+        rpc,
+        selectedRecordId,
+        layoutJson,
+        cache,
+        paperFormat,
+        paperOrientation,
+    ]);
 
     // Debounced auto-refresh when elements or record change
     useEffect(() => {

@@ -111,7 +111,7 @@ export default function ReportCanvas({
                 });
                 obj.setCoords();
             }
-            syncObjectToElement(obj);
+            syncObjectToElement(obj, elementsRef, onElementsChange);
         });
 
         // Draw initial grid
@@ -143,16 +143,37 @@ export default function ReportCanvas({
             }
         }
 
+        // Complex types that must be recreated because they are Groups
+        // whose children can't be updated individually
+        const complexTypes = new Set(["image", "pagebreak", "table", "container"]);
+
         // Add or update objects
         for (const element of elements) {
             const existing = elementsMapRef.current.get(element.id);
             if (existing) {
-                // Update position/size if changed externally
-                updateFabricObject(existing, element);
+                // If type changed or it's a complex type, recreate from scratch
+                if (
+                    element.type !== existing._elementType ||
+                    complexTypes.has(element.type)
+                ) {
+                    fc.remove(existing);
+                    elementsMapRef.current.delete(element.id);
+                    const obj = createFabricObject(element);
+                    if (obj) {
+                        obj._elementId = element.id;
+                        obj._elementType = element.type;
+                        fc.add(obj);
+                        elementsMapRef.current.set(element.id, obj);
+                    }
+                } else {
+                    // Update simple objects in-place
+                    updateFabricObject(existing, element);
+                }
             } else {
                 const obj = createFabricObject(element);
                 if (obj) {
                     obj._elementId = element.id;
+                    obj._elementType = element.type;
                     fc.add(obj);
                     elementsMapRef.current.set(element.id, obj);
                 }
@@ -503,15 +524,111 @@ export default function ReportCanvas({
 
 function updateFabricObject(fabObj, element) {
     const pos = element.position;
+    const style = element.style || {};
+
+    // Always update position
     if (pos) {
         fabObj.set({left: pos.x, top: pos.y});
     }
+
+    // Update based on element type
+    if (element.type === "text" || element.type === "heading") {
+        // Text content
+        const text = element.fieldPath
+            ? `[${element.fieldPath}]`
+            : element.content || (element.type === "text" ? "Text" : "Heading");
+
+        // Font size depends on heading level
+        const headingSizes = {1: 24, 2: 20, 3: 16, 4: 14, 5: 12, 6: 11};
+        let fontSize = parseInt(style.fontSize, 10) || 12;
+        let fontWeight = style.fontWeight || "normal";
+        if (element.type === "heading") {
+            const level = parseInt(style.level, 10) || 2;
+            fontSize = headingSizes[level] || 20;
+            fontWeight = style.fontWeight || "bold";
+        }
+
+        fabObj.set({
+            text: text,
+            fontSize: fontSize,
+            fontWeight: fontWeight,
+            fill: style.color || "#000000",
+            textAlign: style.textAlign || "left",
+            fontFamily: style.fontFamily || "sans-serif",
+            width: style.width || fabObj.width,
+            padding: style.padding !== undefined ? parseInt(style.padding, 10) : 4,
+            backgroundColor: style.backgroundColor || "transparent",
+            opacity: style.opacity !== undefined ? parseFloat(style.opacity) : 1,
+            lineHeight:
+                style.lineHeight !== undefined
+                    ? parseFloat(style.lineHeight)
+                    : undefined,
+            underline: style.textDecoration === "underline",
+            linethrough: style.textDecoration === "line-through",
+            overline: style.textDecoration === "overline",
+        });
+
+        // Handle border via stroke
+        if (style.borderBottom && typeof style.borderBottom === "string") {
+            const match = style.borderBottom.match(
+                /([\d.]+)px\s+solid\s+(#[0-9a-fA-F]+)/
+            );
+            if (match) {
+                fabObj.set({
+                    stroke: match[2],
+                    strokeWidth: parseInt(match[1], 10),
+                });
+            }
+        }
+    } else if (element.type === "line") {
+        const lineWidth = style.width || 700;
+        fabObj.set({
+            x1: 0,
+            y1: 0,
+            x2: lineWidth,
+            y2: 0,
+            stroke: style.color || "#cccccc",
+            strokeWidth: parseInt(style.strokeWidth, 10) || 1,
+            opacity: style.opacity !== undefined ? parseFloat(style.opacity) : 1,
+        });
+    } else if (element.type === "spacer") {
+        const height = parseInt(style.height, 10) || 20;
+        fabObj.set({
+            height: height,
+            fill: style.backgroundColor || "transparent",
+            opacity: style.opacity !== undefined ? parseFloat(style.opacity) : 1,
+        });
+    }
+
+    // Common for all non-group objects
+    if (fabObj.type !== "group") {
+        fabObj.set({
+            opacity: style.opacity !== undefined ? parseFloat(style.opacity) : 1,
+        });
+    }
+
     fabObj.setCoords();
 }
 
-function syncObjectToElement(fabObj) {
-    // Position is synced via the object:modified event
+function syncObjectToElement(fabObj, elementsRef, onElementsChange) {
+    // Sync position and size from fabric object back to React state
     if (!fabObj._elementId) return;
+    const id = fabObj._elementId;
+    const updated = elementsRef.current.map((el) => {
+        if (el.id !== id) return el;
+        return {
+            ...el,
+            position: {
+                x: Math.round(fabObj.left),
+                y: Math.round(fabObj.top),
+            },
+            size: {
+                width: Math.round(fabObj.width * fabObj.scaleX),
+                height: Math.round(fabObj.height * fabObj.scaleY),
+            },
+        };
+    });
+    onElementsChange(updated);
 }
 
 function drawGrid(fc) {

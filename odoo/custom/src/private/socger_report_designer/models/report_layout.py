@@ -60,6 +60,54 @@ def _build_page_css(env, paper_format, paper_orientation, paper_format_id=None):
     )
 
 
+def _build_screen_page_css(env, paper_format, paper_orientation, paper_format_id=None):
+    """Return ``@media screen`` CSS to render a page-sized box in HTML preview.
+
+    The ``@page`` directive only works in print media.  For the iframe-based
+    HTML preview we need screen CSS that constrains ``.page`` to the correct
+    dimensions and centres it on a grey background.  Uses ``!important`` to
+    override Odoo's Bootstrap ``.container`` and ``.page`` styles which
+    otherwise cap the width and force a portrait layout.
+    """
+    pf = paper_format_id or _resolve_paper_format(env, paper_format, paper_orientation)
+    w_mm, h_mm = _PAPER_SIZE_MM.get(paper_format, (210, 297))
+    if paper_orientation == "landscape":
+        w_mm, h_mm = h_mm, w_mm
+    mt = pf.margin_top or 40
+    mb = pf.margin_bottom or 20
+    ml = pf.margin_left or 7
+    mr = pf.margin_right or 7
+    return (
+        f"@media screen {{"
+        f"  html, body {{ background: #e0e0e0 !important; "
+        f"    margin: 0 !important; padding: 10px 0 !important; "
+        f"    max-width: none !important; width: auto !important; "
+        f"    overflow-x: auto !important; }}"
+        f"  body.o_body_html.container {{ max-width: none !important; "
+        f"    width: auto !important; padding: 10px 0 !important; }}"
+        f"  body.o_body_html.container .container {{ max-width: none !important; "
+        f"    width: auto !important; }}"
+        f"  #wrapwrap, main {{ max-width: none !important; width: auto !important; }}"
+        f"  .article, .o_report_layout_standard {{ max-width: none !important; "
+        f"    width: auto !important; margin: 0 !important; padding: 0 !important; }}"
+        f"  .page {{"
+        f"    width: {w_mm}mm !important;"
+        f"    min-height: {h_mm}mm !important;"
+        f"    margin: 10px auto !important;"
+        f"    padding: {mt}mm {mr}mm {mb}mm {ml}mm !important;"
+        f"    background: white !important;"
+        f"    box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;"
+        f"    overflow: hidden !important;"
+        f"    page-break-after: always !important;"
+        f"  }}"
+        f"  .o_report_layout_header, .o_report_layout_footer {{"
+        f"    max-width: {w_mm}mm !important;"
+        f"    margin: 0 auto !important;"
+        f"  }}"
+        f"}}"
+    )
+
+
 class ReportDesignerLayout(models.Model):
     _name = "report.designer.layout"
     _description = "Report Designer Layout"
@@ -473,6 +521,12 @@ class ReportDesignerLayout(models.Model):
 
         Used by the live-preview endpoint so the user can preview without
         publishing first.
+
+        Uses ``web.html_container`` for the HTML shell but NOT
+        ``web.external_layout`` (avoids company header/footer and conflicting
+        report CSS).  Injects screen-media CSS that constrains each page to
+        the correct physical dimensions (portrait or landscape) and centres
+        it on a grey background.
         """
         try:
             layout = (
@@ -495,17 +549,76 @@ class ReportDesignerLayout(models.Model):
         style = layout.get("style", {})
         pf_name = style.get("paperFormat", paper_format)
         pf_orient = style.get("paperOrientation", paper_orientation)
-        page_css = _build_page_css(self.env, pf_name, pf_orient)
+        print_css = _build_page_css(self.env, pf_name, pf_orient)
+
+        # Page dimensions in mm and px (1mm ≈ 3.78px at 96 DPI)
+        w_mm, h_mm = _PAPER_SIZE_MM.get(pf_name, (210, 297))
+        if pf_orient == "landscape":
+            w_mm, h_mm = h_mm, w_mm
+        w_px = int(w_mm * 3.78)
+        h_px = int(h_mm * 3.78)
+
+        _logger.info(
+            "generate_preview_qweb: paper_format=%s, orientation=%s, elements=%d, "
+            "page_dimensions=%dx%dmm (%dx%dpx)",
+            pf_name,
+            pf_orient,
+            len(elements),
+            w_mm,
+            h_mm,
+            w_px,
+            h_px,
+        )
+
+        # Build a comprehensive screen CSS block that overrides ALL Odoo
+        # report / Bootstrap styles via ``!important``.
+        mt = 20  # inner padding top (mm)
+        mb = 20  # inner padding bottom (mm)
+        ml_ = 15  # inner padding left (mm)
+        mr_ = 15  # inner padding right (mm)
+        padding_css = f"{mt}mm {mr_}mm {mb}mm {ml_}mm"
+        screen_css = (
+            "@media screen {\n"
+            "  html, body {\n"
+            "    background: #e0e0e0 !important;\n"
+            "    margin: 0 !important;\n"
+            "    padding: 10px 0 !important;\n"
+            "    max-width: none !important;\n"
+            "    width: auto !important;\n"
+            "    overflow-x: auto !important;\n"
+            "    overflow-y: auto !important;\n"
+            "  }\n"
+            "  #wrapwrap {\n"
+            "    display: block !important;\n"
+            "    overflow: visible !important;\n"
+            "  }\n"
+            f"  .page {{\n"
+            f"    display: block !important;\n"
+            f"    width: {w_px}px !important;\n"
+            f"    min-height: {h_px}px !important;\n"
+            f"    margin: 10px auto !important;\n"
+            f"    padding: {padding_css} !important;\n"
+            f"    background: #fff !important;\n"
+            f"    box-shadow: 0 2px 12px rgba(0,0,0,0.15) !important;\n"
+            f"    overflow: hidden !important;\n"
+            f"    box-sizing: border-box !important;\n"
+            f"    float: none !important;\n"
+            f"    max-width: none !important;\n"
+            f"    page-break-after: always;\n"
+            f"  }}\n"
+            "}\n"
+        )
 
         return f"""<template>
-    <t t-call="web.html_container">
+    <t t-set="preview_css">
+{print_css}
+{screen_css}
+    </t>
+    <t t-call="web.html_preview_container">
         <t t-foreach="docs" t-as="o">
-            <t t-call="web.external_layout">
-                <div class="page">
-                    <style>{page_css}</style>
-                    {body_content}
-                </div>
-            </t>
+            <div class="page">
+                {body_content}
+            </div>
         </t>
     </t>
 </template>"""
@@ -652,7 +765,12 @@ class ReportDesignerLayout(models.Model):
                     opts = {"widget": "monetary", "display_currency": "o.currency_id"}
                 opts_str = str(opts).replace("'", '"')
                 t_options_attr = f" t-options='{opts_str}'"
-            return f'<p{attr}><span t-field="o.{field_path}"' f"{t_options_attr}/></p>"
+            # Strip leading dot if any (frontend may store as ".name")
+            field_path_clean = field_path.lstrip(".")
+            return (
+                f'<p{attr}><span t-field="o.{field_path_clean}"'
+                f"{t_options_attr}/></p>"
+            )
         if content:
             # Static text — escape XML entities
             safe = (
@@ -683,8 +801,9 @@ class ReportDesignerLayout(models.Model):
         if not field_path:
             return '<p class="text-muted">[Image — no field bound]</p>'
 
+        field_path_clean = field_path.lstrip(".")
         return (
-            f'<img t-att-src="image_data_uri(o.{field_path})"'
+            f'<img t-att-src="image_data_uri(o.{field_path_clean})"'
             f' style="max-width: {max_width};"/>'
         )
 
@@ -745,7 +864,8 @@ class ReportDesignerLayout(models.Model):
         attr = self._style_attr(style)
 
         if field_path:
-            return f'<div{attr}><t t-field="o.{field_path}"/></div>'
+            field_path_clean = field_path.lstrip(".")
+            return f'<div{attr}><t t-field="o.{field_path_clean}"/></div>'
         content = element.get("content", "")
         return f"<div{attr}>{content}</div>"
 

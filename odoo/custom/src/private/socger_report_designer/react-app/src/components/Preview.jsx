@@ -18,7 +18,13 @@ import usePreviewCache from "../hooks/usePreviewCache.js";
  *   targetModel – selected Odoo model name
  *   rpc         – backend RPC function
  */
-export default function Preview({elements, targetModel, rpc}) {
+export default function Preview({
+    elements,
+    targetModel,
+    rpc,
+    paperFormat,
+    paperOrientation,
+}) {
     const [html, setHtml] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -87,7 +93,9 @@ export default function Preview({elements, targetModel, rpc}) {
                 layoutJson,
                 targetModel,
                 rpc,
-                selectedRecordId
+                selectedRecordId,
+                paperFormat,
+                paperOrientation
             );
             if (mySeq !== seqRef.current) return;
             if (result.error) {
@@ -106,7 +114,16 @@ export default function Preview({elements, targetModel, rpc}) {
         } finally {
             if (mySeq === seqRef.current) setLoading(false);
         }
-    }, [elements, targetModel, rpc, selectedRecordId, layoutJson, cache]);
+    }, [
+        elements,
+        targetModel,
+        rpc,
+        selectedRecordId,
+        layoutJson,
+        cache,
+        paperFormat,
+        paperOrientation,
+    ]);
 
     // Auto-refresh on first render when elements exist
     useEffect(() => {

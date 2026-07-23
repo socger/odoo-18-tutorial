@@ -61,6 +61,12 @@ export function createTextObject(element, pos, style) {
         fontFamily: "sans-serif",
         width: style.width || 300,
         padding: 4,
+        backgroundColor: style.backgroundColor || "transparent",
+        lineHeight:
+            style.lineHeight !== undefined ? parseFloat(style.lineHeight) : undefined,
+        underline: style.textDecoration === "underline",
+        linethrough: style.textDecoration === "line-through",
+        overline: style.textDecoration === "overline",
         editable: false,
         hasControls: true,
         ...SELECTION_STYLE,
@@ -84,6 +90,12 @@ export function createHeadingObject(element, pos, style) {
         fontFamily: "sans-serif",
         width: style.width || 500,
         padding: 4,
+        backgroundColor: style.backgroundColor || "transparent",
+        lineHeight:
+            style.lineHeight !== undefined ? parseFloat(style.lineHeight) : undefined,
+        underline: style.textDecoration === "underline",
+        linethrough: style.textDecoration === "line-through",
+        overline: style.textDecoration === "overline",
         editable: false,
         ...SELECTION_STYLE,
     });

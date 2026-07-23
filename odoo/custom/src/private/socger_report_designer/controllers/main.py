@@ -242,13 +242,17 @@ class ReportDesignerController(http.Controller):
         csrf=False,
     )
     def save_layout(self, layout_id, **kwargs):
-        """Save layout JSON data."""
+        """Save layout JSON data and editable fields."""
         layout = request.env["report.designer.layout"].browse(layout_id)
         if not layout.exists():
             return {"error": "Layout not found"}
 
         layout_json = kwargs.get("layout_json")
         name = kwargs.get("name")
+        target_model = kwargs.get("target_model")
+        description = kwargs.get("description")
+        paper_format = kwargs.get("paper_format")
+        paper_orientation = kwargs.get("paper_orientation")
 
         vals = {}
         if layout_json is not None:
@@ -262,6 +266,14 @@ class ReportDesignerController(http.Controller):
             )
         if name:
             vals["name"] = name
+        if target_model:
+            vals["target_model"] = target_model
+        if description is not None:
+            vals["description"] = description
+        if paper_format:
+            vals["paper_format"] = paper_format
+        if paper_orientation:
+            vals["paper_orientation"] = paper_orientation
 
         layout.write(vals)
         return {"success": True, "version": layout.version}
@@ -372,10 +384,19 @@ class ReportDesignerController(http.Controller):
             model = request.env[model_name]
             model.check_access_rights("read")
         except (KeyError, Exception) as exc:
+            _logger.warning(
+                "Records endpoint access denied for model %s: %s", model_name, exc
+            )
             return {"error": str(exc)}
 
         limit = kwargs.get("limit", 50)
         records = model.search([], limit=limit)
+        _logger.info(
+            "Records endpoint: model=%s, limit=%s, found=%s records",
+            model_name,
+            limit,
+            len(records),
+        )
         result = []
         for rec in records:
             result.append(
@@ -447,6 +468,17 @@ class ReportDesignerController(http.Controller):
         paper_format = kwargs.get("paper_format", "a4")
         paper_orientation = kwargs.get("paper_orientation", "portrait")
 
+        _logger.info(
+            "live_preview raw kwargs: target_model=%s, format=%s, paper=%s, orient=%s, "
+            "has_record_id=%s, layout_json_len=%s",
+            target_model,
+            output_format,
+            paper_format,
+            paper_orientation,
+            "yes" if record_id else "no",
+            len(str(layout_json)),
+        )
+
         if not target_model:
             return {"error": "target_model is required"}
 
@@ -474,10 +506,22 @@ class ReportDesignerController(http.Controller):
     # === PREVIEW HELPERS (private) === #
 
     @staticmethod
-    def _preview_cache_key(layout_json, target_model, record_id=None):
+    def _preview_cache_key(
+        layout_json,
+        target_model,
+        record_id=None,
+        paper_format=None,
+        paper_orientation=None,
+    ):
         """Generate a cache key for the preview result."""
         raw = json.dumps(
-            {"json": layout_json, "model": target_model, "record": record_id},
+            {
+                "json": layout_json,
+                "model": target_model,
+                "record": record_id,
+                "format": paper_format,
+                "orientation": paper_orientation,
+            },
             sort_keys=True,
             default=str,
         )
@@ -513,21 +557,45 @@ class ReportDesignerController(http.Controller):
         """Core live-preview: generate QWeb from JSON and render.
 
         HTML format creates a temporary ir.ui.view and renders via ir.qweb.
+        If QWeb rendering fails or returns empty content, falls back to a
+        direct HTML generation path that resolves field values without QWeb.
         PDF format creates a temporary ir.actions.report + ir.ui.view pair so
         that _render_qweb_pdf can resolve the template.
         """
+        _logger.info(
+            "_live_preview called: model=%s, format=%s, paper=%s, orient=%s, "
+            "record_id=%s, json_len=%s",
+            target_model,
+            output_format,
+            paper_format,
+            paper_orientation,
+            record_id,
+            len(str(layout_json)),
+        )
         try:
             records = self._get_preview_records(target_model, record_id)
             if isinstance(records, dict):
                 return records  # error dict
 
+            _logger.info(
+                "_live_preview records OK: model=%s, record_ids=%s, count=%s",
+                target_model,
+                records.ids,
+                len(records),
+            )
+
             # Check preview cache (HTML only)
             if output_format == "html":
                 cache_key = self._preview_cache_key(
-                    layout_json, target_model, record_id
+                    layout_json,
+                    target_model,
+                    record_id,
+                    paper_format,
+                    paper_orientation,
                 )
                 cached = self._preview_cache_get(cache_key)
                 if cached is not None:
+                    _logger.info("_live_preview: cache HIT for key=%s", cache_key[:12])
                     return {"html": cached, "record_count": len(records)}
 
             # Generate QWeb XML on-the-fly
@@ -537,8 +605,100 @@ class ReportDesignerController(http.Controller):
                 paper_format=paper_format,
                 paper_orientation=paper_orientation,
             )
+            _logger.info(
+                "_live_preview QWeb XML generated: len=%d, first_300=%s",
+                len(qweb_xml),
+                qweb_xml[:300],
+            )
 
-            # Create a temporary ir.ui.view with a stable template id
+            if output_format == "html":
+                # --- QWeb rendering path ---
+                html_content = None
+                qweb_error = None
+                tmp_view = None
+                try:
+                    tmp_view = request.env["ir.ui.view"].create(
+                        {
+                            "name": "socger_report_designer.preview_temp",
+                            "type": "qweb",
+                            "arch": qweb_xml,
+                        }
+                    )
+                    _logger.info(
+                        "_live_preview temporary view created: id=%s, key=%s",
+                        tmp_view.id,
+                        tmp_view.key,
+                    )
+
+                    html_content = request.env["ir.qweb"]._render(
+                        tmp_view.id,
+                        {
+                            "docs": records,
+                            "doc_ids": records.ids,
+                            "doc_model": target_model,
+                        },
+                    )
+                    _logger.info(
+                        "_live_preview QWeb _render returned: type=%s, len=%s",
+                        type(html_content).__name__,
+                        len(html_content) if html_content else 0,
+                    )
+                    if html_content:
+                        _logger.info(
+                            "_live_preview HTML first_500=%s",
+                            html_content[:500],
+                        )
+                    else:
+                        _logger.warning(
+                            "_live_preview QWeb _render returned empty/None!"
+                        )
+
+                    # Strip <template> wrapper if present — in HTML5 the
+                    # <template> element is INERT (not rendered visually),
+                    # so the iframe would show a blank page.
+                    if html_content and isinstance(html_content, str):
+                        html_content = self._strip_template_wrapper(html_content)
+                except Exception as exc:
+                    qweb_error = exc
+                    _logger.exception("_live_preview QWeb _render FAILED: %s", exc)
+                finally:
+                    if tmp_view:
+                        try:
+                            tmp_view.unlink()
+                        except Exception:
+                            _logger.debug(
+                                "Failed to unlink temp view %s",
+                                tmp_view.id,
+                                exc_info=True,
+                            )
+
+                # If QWeb produced valid HTML, use it
+                if html_content and len(html_content) > 100:
+                    self._preview_cache_set(cache_key, html_content)
+                    return {"html": html_content, "record_count": len(records)}
+
+                # --- Fallback: direct HTML generation (bypass QWeb) ---
+                _logger.warning(
+                    "_live_preview QWeb path produced empty/short content "
+                    "(len=%s, error=%s). Falling back to direct HTML.",
+                    len(html_content) if html_content else 0,
+                    qweb_error,
+                )
+                html_content = self._generate_preview_html_direct(
+                    layout_json,
+                    records,
+                    paper_format,
+                    paper_orientation,
+                )
+                _logger.info(
+                    "_live_preview direct HTML fallback: len=%d, first_500=%s",
+                    len(html_content),
+                    html_content[:500],
+                )
+                self._preview_cache_set(cache_key, html_content)
+                return {"html": html_content, "record_count": len(records)}
+
+            # --- PDF rendering path ---
             tmp_view = request.env["ir.ui.view"].create(
                 {
                     "name": "socger_report_designer.preview_temp",
@@ -546,43 +706,29 @@ class ReportDesignerController(http.Controller):
                     "arch": qweb_xml,
                 }
             )
+            report_name = f"socger_report_designer.preview_{tmp_view.id}"
+            tmp_report = request.env["ir.actions.report"].create(
+                {
+                    "name": "Preview",
+                    "model": target_model,
+                    "report_type": "qweb-pdf",
+                    "report_name": report_name,
+                    "report_file": report_name,
+                }
+            )
+            tmp_view.write({"key": report_name})
 
             try:
-                if output_format == "html":
-                    html_content = request.env["ir.qweb"]._render(
-                        tmp_view.id, {"docs": records}
-                    )
-                    # Store in preview cache
-                    self._preview_cache_set(cache_key, html_content)
-                    return {"html": html_content, "record_count": len(records)}
-
-                # PDF rendering — create a temporary ir.actions.report so
-                # _render_qweb_pdf can resolve the template by report_name.
-                report_name = f"socger_report_designer.preview_{tmp_view.id}"
-                tmp_report = request.env["ir.actions.report"].create(
-                    {
-                        "name": "Preview",
-                        "model": target_model,
-                        "report_type": "qweb-pdf",
-                        "report_name": report_name,
-                        "report_file": report_name,
-                    }
+                pdf_content, _ = request.env["ir.actions.report"]._render_qweb_pdf(
+                    report_name, records.ids
                 )
-                # Update the view's key so ir.qweb can find it by name
-                tmp_view.write({"key": report_name})
-
-                try:
-                    pdf_content, _ = request.env["ir.actions.report"]._render_qweb_pdf(
-                        report_name, records.ids
-                    )
-                    pdf_base64 = base64.b64encode(pdf_content).decode("utf-8")
-                    return {
-                        "pdf_base64": pdf_base64,
-                        "record_count": len(records),
-                    }
-                finally:
-                    tmp_report.unlink()
+                pdf_base64 = base64.b64encode(pdf_content).decode("utf-8")
+                return {
+                    "pdf_base64": pdf_base64,
+                    "record_count": len(records),
+                }
             finally:
+                tmp_report.unlink()
                 tmp_view.unlink()
 
         except Exception:
@@ -614,15 +760,395 @@ class ReportDesignerController(http.Controller):
             model = request.env[target_model]
             model.check_access_rights("read")
         except (KeyError, Exception) as exc:
+            _logger.warning(
+                "Preview records access denied for model %s: %s", target_model, exc
+            )
             return {"error": str(exc)}
 
         if record_id:
             records = model.browse(record_id)
             if not records.exists():
                 return {"error": f"Record {record_id} not found"}
+            _logger.info(
+                "Preview using record %s for model %s", record_id, target_model
+            )
             return records
 
         records = model.search([], limit=1)
         if not records:
+            _logger.warning("No records found for model %s in preview", target_model)
             return {"error": f"No records found for model {target_model}"}
+        _logger.info(
+            "Preview using first record ID=%s for model %s",
+            records[0].id,
+            target_model,
+        )
         return records
+
+    # === DIRECT HTML FALLBACK (bypass QWeb) === #
+
+    @staticmethod
+    def _strip_template_wrapper(html):
+        """Remove <template>...</template> wrapper from QWeb-rendered HTML.
+
+        Odoo's ``web.html_preview_container`` wraps the output in a
+        ``<template>`` element.  In HTML5 this element is *inert* — its
+        content is stored in a DocumentFragment and is **not rendered**
+        visually.  Since we inject this HTML into an iframe via
+        ``document.write()``, the wrapper must be stripped.
+        """
+        if not html:
+            return html
+        html = str(html)
+        # Quick check — avoid regex overhead for the common case
+        if not html.lstrip().startswith("<template"):
+            return html
+
+        # Strip opening <template...> tag
+        import re
+
+        html = re.sub(r"<template[^>]*>\s*", "", html, count=1, flags=re.IGNORECASE)
+        # Strip closing </template> tag
+        html = re.sub(r"\s*</template>\s*$", "", html, flags=re.IGNORECASE)
+        return html
+
+    @staticmethod
+    def _resolve_field_value(record, field_path):
+        """Resolve a dotted field path to its value on a record.
+
+        Traverses relational fields (e.g. ``partner_id.name``).
+        Returns empty string on any resolution failure.
+        """
+        if not field_path:
+            return ""
+        parts = field_path.split(".")
+        value = record
+        for part in parts:
+            if not part:
+                continue
+            try:
+                value = getattr(value, part)
+                # If we hit a recordset, browse into it for the next part
+                if hasattr(value, "ids") and len(value) == 1:
+                    pass  # single-record recordset, continue traversal
+                elif hasattr(value, "ids") and len(value) == 0:
+                    return ""
+            except Exception:
+                return ""
+        # Format the final value
+        if hasattr(value, "ids"):
+            # It's a recordset — return display_name
+            return value.display_name if value else ""
+        if value is False or value is None:
+            return ""
+        return str(value)
+
+    def _build_style_attr(self, style):
+        """Convert a style dict to an inline CSS ``style="..."`` attribute."""
+        if not style:
+            return ""
+        mapping = {
+            "fontSize": lambda v: f"font-size: {v}pt",
+            "fontWeight": lambda v: f"font-weight: {v}",
+            "fontStyle": lambda v: f"font-style: {v}",
+            "color": lambda v: f"color: {v}",
+            "backgroundColor": lambda v: f"background-color: {v}",
+            "textAlign": lambda v: f"text-align: {v}",
+            "textDecoration": lambda v: f"text-decoration: {v}",
+            "lineHeight": lambda v: f"line-height: {v}",
+            "padding": lambda v: f"padding: {v}px",
+            "paddingTop": lambda v: f"padding-top: {v}px",
+            "paddingBottom": lambda v: f"padding-bottom: {v}px",
+            "paddingLeft": lambda v: f"padding-left: {v}px",
+            "paddingRight": lambda v: f"padding-right: {v}px",
+            "margin": lambda v: f"margin: {v}px",
+            "marginTop": lambda v: f"margin-top: {v}px",
+            "marginBottom": lambda v: f"margin-bottom: {v}px",
+            "marginLeft": lambda v: f"margin-left: {v}px",
+            "marginRight": lambda v: f"margin-right: {v}px",
+            "borderBottom": lambda v: f"border-bottom: {v}",
+            "borderTop": lambda v: f"border-top: {v}",
+            "width": lambda v: f"width: {v}" if isinstance(v, str) else f"width: {v}px",
+            "maxWidth": lambda v: f"max-width: {v}"
+            if isinstance(v, str)
+            else f"max-width: {v}px",
+            "minWidth": lambda v: f"min-width: {v}"
+            if isinstance(v, str)
+            else f"min-width: {v}px",
+            "height": lambda v: f"height: {v}"
+            if isinstance(v, str)
+            else f"height: {v}px",
+            "opacity": lambda v: f"opacity: {v}",
+            "display": lambda v: f"display: {v}",
+            "level": lambda v: "",
+        }
+        parts = []
+        for key, formatter in mapping.items():
+            val = style.get(key)
+            if val is not None and val != "":
+                parts.append(formatter(val))
+        css = "; ".join(parts)
+        return f' style="{css}"' if css else ""
+
+    @staticmethod
+    def _safe_xml(text):
+        """Escape XML/HTML entities in text."""
+        if not text:
+            return ""
+        return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    def _render_element_to_html_direct(self, record, element):
+        """Render a single element to HTML, resolving field values directly.
+
+        This bypasses QWeb entirely — used as a fallback when QWeb rendering
+        fails or returns empty content.
+        """
+        elem_type = element.get("type", "text")
+        style = element.get("style", {})
+        attr = self._build_style_attr(style)
+
+        if elem_type == "text":
+            field_path = element.get("fieldPath", "")
+            content = element.get("content", "")
+            if field_path:
+                clean = field_path.lstrip(".")
+                value = self._resolve_field_value(record, clean)
+                return f"<p{attr}>{self._safe_xml(value)}</p>"
+            if content:
+                return f"<p{attr}>{self._safe_xml(content)}</p>"
+            return ""
+
+        if elem_type == "heading":
+            content = element.get("content", "Heading")
+            level = style.get("level", 2)
+            return f"<h{level}{attr}>{self._safe_xml(content)}</h{level}>"
+
+        if elem_type == "line":
+            return "<hr/>"
+
+        if elem_type == "spacer":
+            height = style.get("height", "20px")
+            spacer_attr = self._build_style_attr({"height": height})
+            return f"<div{spacer_attr}></div>"
+
+        if elem_type == "pagebreak":
+            return '<div style="page-break-after: always;"></div>'
+
+        if elem_type == "html":
+            field_path = element.get("fieldPath", "")
+            content = element.get("content", "")
+            if field_path:
+                clean = field_path.lstrip(".")
+                value = self._resolve_field_value(record, clean)
+                return f"<div{attr}>{value}</div>"
+            return f"<div{attr}>{content}</div>"
+
+        if elem_type == "image":
+            field_path = element.get("fieldPath", "")
+            if not field_path:
+                return '<p class="text-muted">[Image — no field bound]</p>'
+            max_width = style.get("maxWidth", "200px")
+            return (
+                f'<img src="" alt="{self._safe_xml(field_path)}"'
+                f' style="max-width: {max_width};"/>'
+            )
+
+        if elem_type == "table":
+            return self._render_table_to_html_direct(record, element)
+
+        if elem_type == "container":
+            return self._render_container_to_html_direct(record, element)
+
+        return ""
+
+    def _render_table_to_html_direct(self, record, element):
+        """Render a table element to HTML with direct field resolution."""
+        data_source = element.get("dataSource", "")
+        columns = element.get("columns", [])
+        t_style = element.get("tableStyle", {})
+
+        if not data_source or not columns:
+            return ""
+
+        # Resolve the O2M/M2M field
+        clean_ds = data_source.lstrip(".")
+        lines = self._resolve_field_value(record, clean_ds)
+        # If it's a recordset, iterate; otherwise treat as list
+        if hasattr(lines, "__iter__") and not isinstance(lines, str):
+            line_records = list(lines)
+        else:
+            return ""
+
+        # Table classes
+        table_classes = "table table-bordered table-sm"
+        border_color = t_style.get("borderColor", "")
+        border_attr = f' style="border-color: {border_color};"' if border_color else ""
+
+        # Header
+        header_bg = t_style.get("headerBgColor", "#e9ecef")
+        header_fs = t_style.get("headerFontSize", 10)
+        header_color = t_style.get("headerColor", "#495057")
+        header_fw = t_style.get("headerFontWeight", "bold")
+        h_style = (
+            f"background-color: {header_bg}; font-size: {header_fs}px;"
+            f" color: {header_color}; font-weight: {header_fw};"
+        )
+        ths = []
+        for col in columns:
+            ht = self._safe_xml(col.get("header", ""))
+            ths.append(f'<th style="{h_style}">{ht}</th>')
+
+        # Body rows
+        rows = []
+        for line in line_records:
+            tds = []
+            for col in columns:
+                fp = col.get("fieldPath", "")
+                align = col.get("align", "")
+                td_style_parts = []
+                if align:
+                    td_style_parts.append(f"text-align: {align}")
+                if border_color:
+                    td_style_parts.append(f"border-color: {border_color}")
+                td_attr = (
+                    f' style="{"; ".join(td_style_parts)}"' if td_style_parts else ""
+                )
+                if fp:
+                    val = self._resolve_field_value(line, fp)
+                    tds.append(f"<td{td_attr}>{self._safe_xml(val)}</td>")
+                else:
+                    tds.append(f"<td{td_attr}></td>")
+            rows.append("<tr>\n" + "\n".join(tds) + "\n</tr>")
+
+        thead = "<tr>\n" + "\n".join(ths) + "\n</tr>"
+        tbody = "\n".join(rows)
+
+        return (
+            f'<table class="{table_classes}"{border_attr}>\n'
+            f"  <thead>{thead}</thead>\n"
+            f"  <tbody>{tbody}</tbody>\n"
+            f"</table>"
+        )
+
+    def _render_container_to_html_direct(self, record, element):
+        """Render a container element to HTML with direct field resolution."""
+        columns = element.get("columns", [])
+        children = element.get("children", [])
+        style = element.get("style", {})
+        attr = self._build_style_attr(style)
+
+        if columns:
+            total_cols = len(columns) or 1
+            col_size = 12 // total_cols
+            col_parts = []
+            for col_elements in columns:
+                inner = []
+                for child in col_elements:
+                    html = self._render_element_to_html_direct(record, child)
+                    if html:
+                        inner.append(html)
+                inner_html = "\n".join(inner) if inner else ""
+                col_parts.append(f'<div class="col-{col_size}">\n{inner_html}\n</div>')
+            return f'<div class="row"{attr}>\n' + "\n".join(col_parts) + "\n</div>"
+
+        if children:
+            inner = []
+            for child in children:
+                html = self._render_element_to_html_direct(record, child)
+                if html:
+                    inner.append(html)
+            inner_html = "\n".join(inner) if inner else ""
+            return f"<div{attr}>\n{inner_html}\n</div>"
+
+        return f"<div{attr}></div>"
+
+    def _generate_preview_html_direct(
+        self,
+        layout_json,
+        records,
+        paper_format="a4",
+        paper_orientation="portrait",
+    ):
+        """Generate a full HTML preview page, resolving fields directly.
+
+        Bypasses QWeb entirely — used as fallback when QWeb rendering fails.
+        Produces a standalone HTML page with inline CSS for page dimensions.
+        """
+        try:
+            layout = (
+                json.loads(layout_json)
+                if isinstance(layout_json, str)
+                else (layout_json or {})
+            )
+        except (json.JSONDecodeError, TypeError):
+            layout = {}
+
+        elements = layout.get("elements", [])
+
+        # Page dimensions in mm
+        paper_sizes = {
+            "a4": (210, 297),
+            "letter": (216, 279),
+            "legal": (216, 356),
+            "a3": (297, 420),
+        }
+        w_mm, h_mm = paper_sizes.get(paper_format, (210, 297))
+        if paper_orientation == "landscape":
+            w_mm, h_mm = h_mm, w_mm
+        w_px = int(w_mm * 3.78)
+        h_px = int(h_mm * 3.78)
+
+        # Build pages — one per record
+        pages = []
+        for record in records:
+            body_parts = []
+            for element in elements:
+                html = self._render_element_to_html_direct(record, element)
+                if html:
+                    body_parts.append(html)
+            body_html = "\n".join(body_parts) if body_parts else "<p>No content</p>"
+            pages.append(f'<div class="page">\n{body_html}\n</div>')
+
+        pages_html = "\n".join(pages)
+
+        return f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+  @page {{ size: {w_mm}mm {h_mm}mm; margin: 20mm 15mm 20mm 15mm; }}
+  @media screen {{
+    html, body {{
+      background: #e0e0e0;
+      margin: 0; padding: 10px 0;
+      max-width: none; width: auto;
+      overflow-x: auto; overflow-y: auto;
+    }}
+    .page {{
+      display: block;
+      width: {w_px}px;
+      min-height: {h_px}px;
+      margin: 10px auto;
+      padding: 20mm 15mm 20mm 15mm;
+      background: #fff;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+      overflow: hidden;
+      box-sizing: border-box;
+      float: none;
+      max-width: none;
+      page-break-after: always;
+    }}
+  }}
+  @media print {{
+    .page {{ page-break-after: always; }}
+  }}
+  body {{ font-family: arial, sans-serif; font-size: 12pt; }}
+  table {{ border-collapse: collapse; width: 100%; }}
+  table th, table td {{ border: 1px solid #ddd; padding: 6px 8px; }}
+  table th {{ background-color: #e9ecef; font-weight: bold; }}
+</style>
+</head>
+<body>
+{pages_html}
+</body>
+</html>"""

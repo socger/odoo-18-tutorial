@@ -157,7 +157,15 @@ export default function App({layoutId, backendRpc}) {
         try {
             const rpc = backendRpc || defaultRpc;
             const layoutJson = JSON.stringify({elements});
-            await saveLayout(currentLayout.id, layoutJson, currentLayout.name, rpc);
+            await saveLayout(
+                currentLayout.id,
+                layoutJson,
+                currentLayout.name,
+                {
+                    target_model: targetModel,
+                },
+                rpc
+            );
             showToast("Layout saved", "success");
         } catch (err) {
             showToast(err.message, "error");
@@ -174,7 +182,15 @@ export default function App({layoutId, backendRpc}) {
             const rpc = backendRpc || defaultRpc;
             // Auto-save before publishing
             const layoutJson = JSON.stringify({elements});
-            await saveLayout(currentLayout.id, layoutJson, currentLayout.name, rpc);
+            await saveLayout(
+                currentLayout.id,
+                layoutJson,
+                currentLayout.name,
+                {
+                    target_model: targetModel,
+                },
+                rpc
+            );
             const result = await publishLayout(currentLayout.id, rpc);
             if (result.error) {
                 showToast(result.error, "error");
@@ -288,6 +304,8 @@ export default function App({layoutId, backendRpc}) {
                                     elements={elements}
                                     targetModel={targetModel}
                                     rpc={backendRpc || defaultRpc}
+                                    paperFormat={currentLayout?.paper_format}
+                                    paperOrientation={currentLayout?.paper_orientation}
                                 />
                             )}
                         </>
@@ -298,6 +316,8 @@ export default function App({layoutId, backendRpc}) {
                                 elements={elements}
                                 targetModel={targetModel}
                                 rpc={backendRpc || defaultRpc}
+                                paperFormat={currentLayout?.paper_format}
+                                paperOrientation={currentLayout?.paper_orientation}
                             />
                         </div>
                     )}

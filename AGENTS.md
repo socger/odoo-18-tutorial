@@ -5,6 +5,12 @@ Doodba.
 
 ## Comportamiento del agente (preferencia persistente)
 
+- **Idioma obligatorio: español**. Toda respuesta, explicación, comentario y interacción
+  con el usuario **debe** estar en español, sin excepción. Esto aplica a todos los
+  agentes y sub-agentes, tanto para tareas de desarrollo Odoo como para cualquier otra
+  consulta o acción. El único contenido que permanece en inglés es el código fuente
+  (Python, XML, TypeScript, JavaScript, React, etc.), variables, nombres de campos,
+  docstrings y ficheros de configuración (por compatibilidad técnica).
 - **Tareas de desarrollo Odoo**: al recibir cualquier tarea de desarrollo Odoo (crear
   modelos, vistas, seguridad, wizards, reports, controladores, migraciones, etc.), el
   agente **debe cargar automáticamente el skill `odoo-development-skill`** y aplicar los

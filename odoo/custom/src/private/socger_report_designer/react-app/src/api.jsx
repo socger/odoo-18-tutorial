@@ -49,18 +49,21 @@ export async function fetchLayouts(rpc) {
 }
 
 /**
- * Save a layout's JSON data.
+ * Save a layout's JSON data and editable fields.
  * @param {number} layoutId - Layout record ID
  * @param {string} layoutJson - Serialized JSON layout
  * @param {string} name - Layout name
+ * @param {Object} extra - Extra editable fields (target_model, description, paper_format, paper_orientation)
  * @param {Function} rpc - RPC function
  * @returns {Promise<Object>} Save result
  */
-export async function saveLayout(layoutId, layoutJson, name, rpc) {
-    const result = await rpc(`/api/report-designer/layouts/${layoutId}/save`, {
+export async function saveLayout(layoutId, layoutJson, name, extra = {}, rpc) {
+    const params = {
         layout_json: layoutJson,
         name,
-    });
+        ...extra,
+    };
+    const result = await rpc(`/api/report-designer/layouts/${layoutId}/save`, params);
     return result;
 }
 
@@ -146,13 +149,24 @@ export async function fetchRecords(modelName, rpc, limit = 50) {
  * @param {string} targetModel - Odoo model name
  * @param {Function} rpc - RPC function
  * @param {number|null} recordId - Optional specific record ID
+ * @param {string} paperFormat - Paper format (a4, letter, legal, a3)
+ * @param {string} paperOrientation - Paper orientation (portrait, landscape)
  * @returns {Promise<Object>} {html, record_count} or {error}
  */
-export async function previewLayoutHtml(layoutJson, targetModel, rpc, recordId) {
+export async function previewLayoutHtml(
+    layoutJson,
+    targetModel,
+    rpc,
+    recordId,
+    paperFormat,
+    paperOrientation
+) {
     const params = {
         layout_json: layoutJson,
         target_model: targetModel,
         format: "html",
+        paper_format: paperFormat || "a4",
+        paper_orientation: paperOrientation || "portrait",
     };
     if (recordId) params.record_id = recordId;
     const result = await rpc("/api/report-designer/preview/html", params);
