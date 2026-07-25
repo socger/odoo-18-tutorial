@@ -100,4 +100,179 @@
         <field name="binding_type">report</field>
         <field name="paperformat_id" ref="paperformat_no_header" />
     </record>
+
+    <!-- vehicle.type reports -->
+    <record id="report_vehicle_type" model="ir.actions.report">
+        <field name="name">Tipos de vehículo</field>
+        <field name="model">vehicle.type</field>
+        <field name="report_type">qweb-pdf</field>
+        <field
+            name="report_name"
+        >socger_expand_fleet.report_vehicle_type_document</field>
+        <field
+            name="report_file"
+        >socger_expand_fleet.report_vehicle_type_document</field>
+        <field name="print_report_name">'Tipos de vehículo'</field>
+        <field name="binding_model_id" ref="model_vehicle_type" />
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro" />
+    </record>
+
+    <record id="report_vehicle_type_basic" model="ir.actions.report">
+        <field name="name">Tipos de vehículo (sin cabecera)</field>
+        <field name="model">vehicle.type</field>
+        <field name="report_type">qweb-pdf</field>
+        <field
+            name="report_name"
+        >socger_expand_fleet.report_vehicle_type_basic_document</field>
+        <field
+            name="report_file"
+        >socger_expand_fleet.report_vehicle_type_basic_document</field>
+        <field name="print_report_name">'Tipos de vehículo (sin cabecera)'</field>
+        <field name="binding_model_id" ref="model_vehicle_type" />
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_no_header" />
+    </record>
+
+    <!-- concept.cost.budget.sale reports -->
+    <record id="report_concept_cost_budget_sale" model="ir.actions.report">
+        <field name="name">Conceptos de control de costes, presupuestos ó ventas</field>
+        <field name="model">concept.cost.budget.sale</field>
+        <field name="report_type">qweb-pdf</field>
+        <field
+            name="report_name"
+        >socger_expand_fleet.report_concept_cost_budget_sale_document</field>
+        <field
+            name="report_file"
+        >socger_expand_fleet.report_concept_cost_budget_sale_document</field>
+        <field
+            name="print_report_name"
+        >'Conceptos de control de costes, presupuestos ó ventas'</field>
+        <field name="binding_model_id" ref="model_concept_cost_budget_sale" />
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro" />
+    </record>
+
+    <record id="report_concept_cost_budget_sale_basic" model="ir.actions.report">
+        <field name="name">Conceptos (sin cabecera)</field>
+        <field name="model">concept.cost.budget.sale</field>
+        <field name="report_type">qweb-pdf</field>
+        <field
+            name="report_name"
+        >socger_expand_fleet.report_concept_cost_budget_sale_basic_document</field>
+        <field
+            name="report_file"
+        >socger_expand_fleet.report_concept_cost_budget_sale_basic_document</field>
+        <field name="print_report_name">'Conceptos (sin cabecera)'</field>
+        <field name="binding_model_id" ref="model_concept_cost_budget_sale" />
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_no_header" />
+    </record>
+
+    <!-- vehicle.feature.category reports -->
+    <record id="report_vehicle_feature_category" model="ir.actions.report">
+        <field name="name">Categorías de características de vehículo</field>
+        <field name="model">vehicle.feature.category</field>
+        <field name="report_type">qweb-pdf</field>
+        <field
+            name="report_name"
+        >socger_expand_fleet.report_vehicle_feature_category_document</field>
+        <field
+            name="report_file"
+        >socger_expand_fleet.report_vehicle_feature_category_document</field>
+        <field
+            name="print_report_name"
+        >'Categorías de características de vehículo'</field>
+        <field name="binding_model_id" ref="model_vehicle_feature_category" />
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro" />
+    </record>
+
+    <record id="report_vehicle_feature_category_basic" model="ir.actions.report">
+        <field name="name">Categorías de características (sin cabecera)</field>
+        <field name="model">vehicle.feature.category</field>
+        <field name="report_type">qweb-pdf</field>
+        <field
+            name="report_name"
+        >socger_expand_fleet.report_vehicle_feature_category_basic_document</field>
+        <field
+            name="report_file"
+        >socger_expand_fleet.report_vehicle_feature_category_basic_document</field>
+        <field
+            name="print_report_name"
+        >'Categorías de características (sin cabecera)'</field>
+        <field name="binding_model_id" ref="model_vehicle_feature_category" />
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_no_header" />
+    </record>
+
+    <!-- vehicle.feature reports -->
+    <record id="report_vehicle_feature" model="ir.actions.report">
+        <field name="name">Características de vehículo</field>
+        <field name="model">vehicle.feature</field>
+        <field name="report_type">qweb-pdf</field>
+        <field
+            name="report_name"
+        >socger_expand_fleet.report_vehicle_feature_document</field>
+        <field
+            name="report_file"
+        >socger_expand_fleet.report_vehicle_feature_document</field>
+        <field name="print_report_name">'Características de vehículo'</field>
+        <field name="binding_model_id" ref="model_vehicle_feature" />
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro" />
+    </record>
+
+    <record id="report_vehicle_feature_basic" model="ir.actions.report">
+        <field name="name">Características de vehículo (sin cabecera)</field>
+        <field name="model">vehicle.feature</field>
+        <field name="report_type">qweb-pdf</field>
+        <field
+            name="report_name"
+        >socger_expand_fleet.report_vehicle_feature_basic_document</field>
+        <field
+            name="report_file"
+        >socger_expand_fleet.report_vehicle_feature_basic_document</field>
+        <field
+            name="print_report_name"
+        >'Características de vehículo (sin cabecera)'</field>
+        <field name="binding_model_id" ref="model_vehicle_feature" />
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_no_header" />
+    </record>
+
+    <!-- vehicle.feature.by.vehicle reports -->
+    <record id="report_vehicle_feature_by_vehicle" model="ir.actions.report">
+        <field name="name">Características por vehículo</field>
+        <field name="model">vehicle.feature.by.vehicle</field>
+        <field name="report_type">qweb-pdf</field>
+        <field
+            name="report_name"
+        >socger_expand_fleet.report_vehicle_feature_by_vehicle_document</field>
+        <field
+            name="report_file"
+        >socger_expand_fleet.report_vehicle_feature_by_vehicle_document</field>
+        <field name="print_report_name">'Características por vehículo'</field>
+        <field name="binding_model_id" ref="model_vehicle_feature_by_vehicle" />
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro" />
+    </record>
+
+    <record id="report_vehicle_feature_by_vehicle_basic" model="ir.actions.report">
+        <field name="name">Características por vehículo (sin cabecera)</field>
+        <field name="model">vehicle.feature.by.vehicle</field>
+        <field name="report_type">qweb-pdf</field>
+        <field
+            name="report_name"
+        >socger_expand_fleet.report_vehicle_feature_by_vehicle_basic_document</field>
+        <field
+            name="report_file"
+        >socger_expand_fleet.report_vehicle_feature_by_vehicle_basic_document</field>
+        <field
+            name="print_report_name"
+        >'Características por vehículo (sin cabecera)'</field>
+        <field name="binding_model_id" ref="model_vehicle_feature_by_vehicle" />
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_no_header" />
+    </record>
 </odoo>

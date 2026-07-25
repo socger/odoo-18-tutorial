@@ -1,0 +1,48 @@
+<odoo>
+    <template id="report_concept_cost_budget_sale_basic_document">
+        <t t-call="web.html_container">
+            <div t-if="not o" t-set="o" t-value="doc" />
+            <div
+                class="article o_table_standard"
+                t-att-data-oe-model="o and o._name"
+                t-att-data-oe-id="o and o.id"
+                t-att-data-oe-lang="o and o.env.context.get('lang')"
+            >
+                <div class="page">
+                    <h3>Conceptos de control de costes, presupuestos ó ventas</h3>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Categoría</th>
+                                <th>Concepto</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="docs" t-as="rec">
+                                <tr>
+                                    <td>
+                                        <span
+                                            t-field="rec.concept_cost_budget_sale_family_id"
+                                        />
+                                    </td>
+                                    <td>
+                                        <span t-field="rec.name" />
+                                    </td>
+                                    <td>
+                                        <span t-field="rec.description" />
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="footer">
+                <div t-if="report_type == 'pdf'" class="text-end text-muted">
+                    Página <span class="page" /> / <span class="topage" />
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

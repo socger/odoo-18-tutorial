@@ -1,0 +1,33 @@
+<odoo>
+    <template id="report_vehicle_feature_document">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <h3>Características de vehículo</h3>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Categoría</th>
+                                <th>Característica</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="docs" t-as="rec">
+                                <tr>
+                                    <td>
+                                        <span
+                                            t-field="rec.vehicle_feature_category_id"
+                                        />
+                                    </td>
+                                    <td>
+                                        <span t-field="rec.name" />
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>
