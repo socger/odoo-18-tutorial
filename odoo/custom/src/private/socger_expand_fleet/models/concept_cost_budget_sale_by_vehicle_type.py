@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class ConceptCostBudgetSaleByVehicleType(models.Model):
@@ -22,6 +22,11 @@ class ConceptCostBudgetSaleByVehicleType(models.Model):
     value = fields.Float(string="Valor", required=True)
     price_guide = fields.Char(string="Guía de precios")
     description = fields.Char(string="Descripción")
+
+    @api.depends("concept_cost_budget_sale_id")
+    def _compute_display_name(self):
+        for record in self:
+            record.display_name = record.concept_cost_budget_sale_id.display_name
 
     _sql_constraints = [
         (

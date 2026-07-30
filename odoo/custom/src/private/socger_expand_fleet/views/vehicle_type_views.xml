@@ -30,7 +30,8 @@
                             name="concepts"
                         >
                             <field name="concept_cost_budget_sale_by_vehicle_type_ids">
-                                <list>
+                                <list editable="top">
+                                    <field name="vehicle_type_id" invisible="1" />
                                     <field name="concept_cost_budget_sale_id" />
                                     <field name="value" />
                                     <field name="price_guide" />

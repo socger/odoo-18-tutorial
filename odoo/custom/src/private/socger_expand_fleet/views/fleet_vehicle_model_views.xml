@@ -11,4 +11,16 @@
             </field>
         </field>
     </record>
+
+    <record id="view_fleet_vehicle_model_list_inherit" model="ir.ui.view">
+        <field name="name">fleet.vehicle.model.list.inherit</field>
+        <field name="model">fleet.vehicle.model</field>
+        <field name="priority" eval="99" />
+        <field name="inherit_id" ref="fleet.fleet_vehicle_model_view_tree" />
+        <field name="arch" type="xml">
+            <field name="vehicle_type" position="replace">
+                <field name="vehicle_type_id" />
+            </field>
+        </field>
+    </record>
 </odoo>
