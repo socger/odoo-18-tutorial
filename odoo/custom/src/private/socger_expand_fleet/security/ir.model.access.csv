@@ -13,3 +13,5 @@ access_vehicle_feature_user,vehicle.feature.user,model_vehicle_feature,fleet.fle
 access_vehicle_feature_manager,vehicle.feature.manager,model_vehicle_feature,fleet.fleet_group_manager,1,1,1,1
 access_vehicle_feature_by_vehicle_user,vehicle.feature.by.vehicle.user,model_vehicle_feature_by_vehicle,fleet.fleet_group_user,1,1,0,0
 access_vehicle_feature_by_vehicle_manager,vehicle.feature.by.vehicle.manager,model_vehicle_feature_by_vehicle,fleet.fleet_group_manager,1,1,1,1
+access_concept_cost_budget_sale_by_vehicle_user,concept.cost.budget.sale.by.vehicle.user,model_concept_cost_budget_sale_by_vehicle,fleet.fleet_group_user,1,0,0,0
+access_concept_cost_budget_sale_by_vehicle_manager,concept.cost.budget.sale.by.vehicle.manager,model_concept_cost_budget_sale_by_vehicle,fleet.fleet_group_manager,1,1,1,1

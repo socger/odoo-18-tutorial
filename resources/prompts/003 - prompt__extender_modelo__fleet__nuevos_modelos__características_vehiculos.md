@@ -97,9 +97,9 @@ Este módulos nuevos tendrán las siguientes vistas:
 
 - Añade al menú "Configuración", del addon
   "/home/socger/trabajo/galvintec/odoo/tutorial/odoo/custom/src/odoo/addons/fleet" de
-  Odoo, un submenú con el título "Características de vehículos". Este submenú tendrá el
-  mismo estilo que el submenú "Confituración/Modelos" y se dividirá en los siguientes
-  submenús con las siguientes acciones:
+  Odoo, un submenú con el título "Características/equipamiento de vehículos". Este
+  submenú tendrá el mismo estilo que el submenú "Confituración/Modelos" y se dividirá en
+  los siguientes submenús con las siguientes acciones:
 
   - Submenú "Familia de características". Acción: llamará al modelo "vehicle_feature"
   - Submenú "Características". Acción: llamará al modelo "vehicle_feature"

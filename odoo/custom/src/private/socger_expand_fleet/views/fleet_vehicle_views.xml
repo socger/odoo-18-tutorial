@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_fleet_vehicle_form_inherit" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.inherit</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form" />
+        <field name="arch" type="xml">
+            <!-- FASE 4: add vehicle_type_id (readonly) before model_year -->
+            <xpath
+                expr="//page[@name='page_model']//field[@name='model_year']"
+                position="before"
+            >
+                <field name="vehicle_type_id" readonly="1" />
+            </xpath>
+
+            <!-- FASE 4: add features tab before Note page -->
+            <xpath expr="//page[@name='note']" position="before">
+                <page
+                    string="Características/equipamiento de vehículos"
+                    name="vehicle_features"
+                >
+                    <field name="vehicle_feature_by_vehicle_ids">
+                        <list>
+                            <field name="vehicle_feature_id" />
+                        </list>
+                    </field>
+                </page>
+                <page
+                    string="Conceptos de control de costes, presupuestos ó ventas"
+                    name="concepts"
+                >
+                    <field name="concept_cost_budget_sale_by_vehicle_ids">
+                        <list>
+                            <field name="concept_cost_budget_sale_by_vehicle_type_id" />
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

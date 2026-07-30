@@ -24,6 +24,21 @@
                             <field name="description" />
                         </group>
                     </group>
+                    <notebook>
+                        <page
+                            string="Conceptos de control de costes, presupuestos ó ventas"
+                            name="concepts"
+                        >
+                            <field name="concept_cost_budget_sale_by_vehicle_type_ids">
+                                <list>
+                                    <field name="concept_cost_budget_sale_id" />
+                                    <field name="value" />
+                                    <field name="price_guide" />
+                                    <field name="description" />
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>

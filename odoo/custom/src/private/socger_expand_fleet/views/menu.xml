@@ -43,7 +43,7 @@
 
     <menuitem
         id="menu_fleet_vehicle_features_configuration"
-        name="Características de vehículos"
+        name="Características/Equipamiento de vehículos"
         parent="fleet.fleet_configuration"
         sequence="15"
         groups="fleet.fleet_group_manager"
@@ -75,11 +75,20 @@
     />
 
     <menuitem
+        id="menu_concept_cost_budget_sale_by_vehicle"
+        name="Flota - Conceptos de control de costes, presupuestos ó ventas"
+        parent="fleet.fleet_vehicles"
+        action="action_concept_cost_budget_sale_by_vehicle"
+        sequence="2"
+        groups="fleet.fleet_group_user"
+    />
+
+    <menuitem
         id="menu_fleet_vehicle_document"
         name="Flota - Documentación"
         parent="fleet.fleet_vehicles"
         action="action_fleet_vehicle_document"
-        sequence="2"
+        sequence="3"
         groups="fleet.fleet_group_user"
     />
 </odoo>

@@ -6,3 +6,6 @@ from . import vehicle_feature_category
 from . import vehicle_feature
 from . import vehicle_feature_by_vehicle
 from . import fleet_vehicle_document
+from . import fleet_vehicle_model
+from . import concept_cost_budget_sale_by_vehicle
+from . import fleet_vehicle

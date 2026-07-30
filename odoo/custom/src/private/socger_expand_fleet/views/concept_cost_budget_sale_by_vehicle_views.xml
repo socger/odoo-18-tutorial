@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_concept_cost_budget_sale_by_vehicle_list" model="ir.ui.view">
+        <field name="name">concept.cost.budget.sale.by.vehicle.list</field>
+        <field name="model">concept.cost.budget.sale.by.vehicle</field>
+        <field name="arch" type="xml">
+            <list string="Concepts by Vehicle">
+                <field name="fleet_vehicle_id" />
+                <field name="concept_cost_budget_sale_by_vehicle_type_id" />
+            </list>
+        </field>
+    </record>
+
+    <record id="view_concept_cost_budget_sale_by_vehicle_form" model="ir.ui.view">
+        <field name="name">concept.cost.budget.sale.by.vehicle.form</field>
+        <field name="model">concept.cost.budget.sale.by.vehicle</field>
+        <field name="arch" type="xml">
+            <form string="Concept by Vehicle">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="fleet_vehicle_id" />
+                            <field name="concept_cost_budget_sale_by_vehicle_type_id" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_concept_cost_budget_sale_by_vehicle_search" model="ir.ui.view">
+        <field name="name">concept.cost.budget.sale.by.vehicle.search</field>
+        <field name="model">concept.cost.budget.sale.by.vehicle</field>
+        <field name="arch" type="xml">
+            <search string="Concepts by Vehicle">
+                <field name="fleet_vehicle_id" />
+                <field name="concept_cost_budget_sale_by_vehicle_type_id" />
+                <group expand="0" string="Group By">
+                    <filter
+                        name="group_vehicle"
+                        string="Vehículo"
+                        context="{'group_by': 'fleet_vehicle_id'}"
+                    />
+                    <filter
+                        name="group_concept"
+                        string="Concepto"
+                        context="{'group_by': 'concept_cost_budget_sale_by_vehicle_type_id'}"
+                    />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record
+        id="action_concept_cost_budget_sale_by_vehicle"
+        model="ir.actions.act_window"
+    >
+        <field
+            name="name"
+        >Por vehículo - Conceptos de control de costes, presupuestos ó ventas</field>
+        <field name="res_model">concept.cost.budget.sale.by.vehicle</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a new concept by vehicle
+            </p>
+        </field>
+    </record>
+</odoo>

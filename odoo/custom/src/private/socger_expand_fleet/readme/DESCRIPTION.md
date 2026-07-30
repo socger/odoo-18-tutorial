@@ -7,7 +7,8 @@ gestión de flota:
 - `concept.cost.budget.sale`: conceptos vinculados a una familia, con indicadores
   `to_cost`, `to_budget` y `to_sale` (al menos uno debe estar activo).
 - `concept.cost.budget.sale.by.vehicle.type`: valor de un concepto por tipo de vehículo.
-- `vehicle.feature.category`: familias de características de vehículos (nombre único).
+- `vehicle.feature.category`: familias de características/equipamiento de vehículos
+  (nombre único).
 - `vehicle.feature`: características vinculadas a una categoría (nombre único por
   categoría).
 - `vehicle.feature.by.vehicle`: asignación de características a vehículos de la flota
