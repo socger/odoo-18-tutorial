@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_fleet_vehicle_document_category_list" model="ir.ui.view">
+        <field name="name">fleet.vehicle.document.category.list</field>
+        <field name="model">fleet.vehicle.document.category</field>
+        <field name="arch" type="xml">
+            <list string="Categorías de documentos de vehículo">
+                <field name="name" />
+                <field name="fleet_vehicle_document_category_id" />
+            </list>
+        </field>
+    </record>
+
+    <record id="view_fleet_vehicle_document_category_form" model="ir.ui.view">
+        <field name="name">fleet.vehicle.document.category.form</field>
+        <field name="model">fleet.vehicle.document.category</field>
+        <field name="arch" type="xml">
+            <form string="Categoría de documento de vehículo">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" />
+                        <h1>
+                            <field
+                                name="name"
+                                placeholder="Nombre de la categoría..."
+                            />
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="fleet_vehicle_document_category_id" />
+                        </group>
+                        <group />
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" />
+                    <field name="activity_ids" />
+                    <field name="message_ids" />
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_fleet_vehicle_document_category" model="ir.actions.act_window">
+        <field name="name">Categorías de documentos de vehículo</field>
+        <field name="res_model">fleet.vehicle.document.category</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crea la primera categoría de documentos de vehículo
+            </p>
+            <p>
+                Organiza la documentación de la flota por categorías (p. ej.
+                ITV, seguro, permiso de circulación...) y agrupa las categorías
+                relacionadas bajo una categoría padre.
+            </p>
+        </field>
+    </record>
+</odoo>
