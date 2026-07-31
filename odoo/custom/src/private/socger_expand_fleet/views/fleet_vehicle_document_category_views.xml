@@ -33,11 +33,14 @@
                         <group />
                     </group>
                 </sheet>
-                <div class="oe_chatter">
+
+                <chatter reload_on_post="True" />
+                <!-- <div class="oe_chatter">
                     <field name="message_follower_ids" />
                     <field name="activity_ids" />
                     <field name="message_ids" />
-                </div>
+                </div> -->
+
             </form>
         </field>
     </record>
