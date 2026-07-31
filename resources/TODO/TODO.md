@@ -1,3 +1,6 @@
+Añadir a flota-Documentación el campo id del modelo Documentación/categorías Modificar
+vista list y form para que aparezca este campo many2one
+
 La vista form y list que he creado para los documentos de vehículos ver si filtran por
 vehículo y si agrupan también.
 
