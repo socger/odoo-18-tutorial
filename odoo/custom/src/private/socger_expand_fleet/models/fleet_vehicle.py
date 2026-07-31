@@ -105,6 +105,8 @@ class FleetVehicle(models.Model):
                     {
                         "fleet_vehicle_id": self.id,
                         "concept_cost_budget_sale_by_vehicle_type_id": concept.id,
+                        "value": concept.value,
+                        "description": concept.description,
                     }
                 )
 

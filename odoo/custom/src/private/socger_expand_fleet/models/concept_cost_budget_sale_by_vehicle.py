@@ -24,6 +24,8 @@ class ConceptCostBudgetSaleByVehicle(models.Model):
         tracking=True,
         index="btree",
     )
+    value = fields.Float(string="Valor", required=True)
+    description = fields.Char(string="Descripción")
 
     _sql_constraints = [
         (
