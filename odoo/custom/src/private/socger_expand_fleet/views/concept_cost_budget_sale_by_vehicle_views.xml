@@ -7,6 +7,7 @@
             <list string="Concepts by Vehicle">
                 <field name="fleet_vehicle_id" />
                 <field name="concept_cost_budget_sale_by_vehicle_type_id" />
+                <field name="value" />
             </list>
         </field>
     </record>
@@ -21,6 +22,8 @@
                         <group>
                             <field name="fleet_vehicle_id" />
                             <field name="concept_cost_budget_sale_by_vehicle_type_id" />
+                            <field name="value" />
+                            <field name="description" />
                         </group>
                     </group>
                 </sheet>
