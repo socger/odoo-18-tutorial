@@ -91,4 +91,37 @@
         sequence="3"
         groups="fleet.fleet_group_user"
     />
+
+    <!-- Reorder "Flota" submenus:
+        1. "Flota" (vehicles list, renamed from "Fleet")
+        2. "Flota - Características por vehículo"
+        3. "Flota - Conceptos de control de costes, presupuestos ó ventas"
+        4. "Flota - Documentación"
+        5. separator
+        6. Contracts
+        7. Services
+        8. Odometers -->
+    <record id="fleet.fleet_vehicle_menu" model="ir.ui.menu">
+        <field name="name">Flota</field>
+    </record>
+
+    <menuitem
+        id="menu_fleet_vehicles_separator"
+        name="──────────"
+        parent="fleet.fleet_vehicles"
+        sequence="4"
+        groups="fleet.fleet_group_user"
+    />
+
+    <record id="fleet.fleet_vehicle_log_contract_menu" model="ir.ui.menu">
+        <field name="sequence">6</field>
+    </record>
+
+    <record id="fleet.fleet_vehicle_log_services_menu" model="ir.ui.menu">
+        <field name="sequence">7</field>
+    </record>
+
+    <record id="fleet.fleet_vehicle_odometer_menu" model="ir.ui.menu">
+        <field name="sequence">8</field>
+    </record>
 </odoo>
