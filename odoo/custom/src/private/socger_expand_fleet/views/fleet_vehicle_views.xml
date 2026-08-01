@@ -5,6 +5,11 @@
         <field name="model">fleet.vehicle</field>
         <field name="inherit_id" ref="fleet.fleet_vehicle_view_form" />
         <field name="arch" type="xml">
+            <!-- Relabel odometer field as "Km actuales" -->
+            <xpath expr="//label[@for='odometer']" position="attributes">
+                <attribute name="string">Km actuales</attribute>
+            </xpath>
+
             <!-- FASE 4: add vehicle_type_id (readonly) before model_year -->
             <xpath
                 expr="//page[@name='page_model']//field[@name='model_year']"
