@@ -19,69 +19,68 @@ Crear un modelo para actualizar los km.actuales de un vehículo. Sus campos ser�
 En la ficha del vehículo, ver si existen estos conceptos que detallo (si no existen
 crearlos):
 
-- Motor/chasis
-- Carrocería
-- Matrícula
-- Nº.bastidor
-- Nº.de obra
+- Matrícula ... YA EXISTIA EN MODULO
+- Nº.bastidor ... YA EXISTIA EN MODULO
+- Precio de compra
+  - Precio ... YA EXISTIA EN MODULO
+- Equipamiento ... YA SE EXTENDIÓ EL MÓDULO CON UN MODELO PARA ESTE TEMA
+- Tipo de vehículo ... YA SE EXTENDIÓ EL MÓDULO CON UN MODELO PARA ESTE TEMA ... Pestaña
+  Modelo de la vista form
+- Matriculación
+  - 1ª matriculación (fecha) ... YA EXISTIA EN MODULO
+- Conductor habitual ... YA EXISTIA EN MODULO
+
+=================================================
+
+- Motor/chasis ... YA EN PROMPT
+- Carrocería ... YA EN PROMPT
+- Nº.de obra ... YA EN PROMPT
 - Precio de compra
 
-  - Precio
-  - Km cuando se compró
+  - Km cuando se compró ... YA EN PROMPT
+
+- Plazas
+
+  - Según permiso ... YA EN PROMPT
+  - Según ficha técnica ... YA EN PROMPT
+  - Ofertables ... YA EN PROMPT
+
+- Configuraciones especiales ... YA EN PROMPT
+
+- Tacógrafo digital ... YA EN PROMPT
+
+- Matriculación
+
+  - Posterior (fecha) ... NO SE VA A CREAR
+  - Edad actual = Fecha actual - 1ª matriculación ... YA EN PROMPT
+
+- Beneficiario gasoleo profesional ... Professional diesel tax relief beneficiary ... YA
+  EN PROMPT
+
+- Ctas y proyecto contable
+  - Ventas km.nacional ... YA EN PROMPT
+  - Ventas km. internacional ... YA EN PROMPT
+  - Proyecto contable ... YA EN PROMPT
+
+=======================================================
+
+Se necesitan modelos nuevos para controlar lo de abajo
+
+=======================================================
 
 - Km. actuales
 
   - Km.
   - Actualizados el
 
-- Plazas
-
-  - Según permiso
-  - Según ficha técnica
-  - Ofertables
-
-- Configuraciones especiales Campo memo
-
-- Equipamiento
-- RFID (Identificación del vehículo al entrar en cocheras)
-
-- Tipo de vehículo
-- Matriculación
-
-  - 1ª matriculación (fecha)
-  - Posterior (fecha)
-  - Edad actual = Posterior - 1ª matriculación
-
 - Empresa
 
   - Empresa a la que pertenece
-  - Cochera
+  - Cochera ... EXISTE ya un campo llamado Ubicación (field location) ... pero no es una
+    tabla
   - Empresa colaboradora / agregada
 
-- Conductor habitual
+- RFID (Identificación del vehículo al entrar en cocheras)
+
 - Tarjeta de transporte
-
   - Ambito
-
-- Beneficiario de gasoleo profesional
-
-- A pagar a conductores por este vehículo
-
-  - Por día
-  - Por km
-    - Servicios locales
-      - Colegios fábricas
-        - Con carga / llenos
-        - Sin carga / vacíos
-      - Servicios discrecionales
-        - Km nacionales
-          - Con carga / llenos
-          - Sin carga / vacíos
-        - Km internacionales / en Extranjero
-          - Con carga / llenos
-          - Sin carga / vacíos
-
-- Ctas y proyecto contable
-  - Ventas km.nacional
-  - Ventas km. internacional
-  - Proyecto contable
