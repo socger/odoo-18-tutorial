@@ -11,6 +11,7 @@
                 default_order="fleet_vehicle_id, name"
             >
                 <field name="fleet_vehicle_id" string="Vehículo" />
+                <field name="fleet_vehicle_document_category_id" string="Categoría" />
                 <field name="name" string="Documento" />
                 <field name="file_size" string="Tamaño" />
                 <field name="mimetype" string="Tipo" />
@@ -45,6 +46,10 @@
                     <group>
                         <group string="Documento">
                             <field name="name" string="Nombre del documento" />
+                            <field
+                                name="fleet_vehicle_document_category_id"
+                                string="Categoría - Documentación flota"
+                            />
                             <field name="datas" string="Archivo" filename="name" />
                             <field name="url" widget="url" invisible="type != 'url'" />
                         </group>
@@ -88,6 +93,7 @@
                     string="Documento"
                 />
                 <field name="fleet_vehicle_id" string="Vehículo" />
+                <field name="fleet_vehicle_document_category_id" string="Categoría" />
                 <separator />
                 <filter
                     name="filter_binary"
@@ -115,6 +121,11 @@
                         name="groupby_create_date"
                         string="Fecha de subida"
                         context="{'group_by': 'create_date:month'}"
+                    />
+                    <filter
+                        name="groupby_fleet_vehicle_document_category"
+                        string="Categoría"
+                        context="{'group_by': 'fleet_vehicle_document_category_id'}"
                     />
                 </group>
             </search>
