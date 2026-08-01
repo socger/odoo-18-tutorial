@@ -114,9 +114,9 @@
         3. "Flota - Conceptos de control de costes, presupuestos ó ventas"
         4. "Flota - Documentación"
         5. separator
-        6. Contracts
-        7. Services
-        8. Odometers -->
+        6. "Flota - Km actuales por vehículo" (Odometers)
+        7. Contracts
+        8. Services -->
     <record id="fleet.fleet_vehicle_menu" model="ir.ui.menu">
         <field name="name">Flota</field>
     </record>
@@ -138,6 +138,7 @@
     </record>
 
     <record id="fleet.fleet_vehicle_odometer_menu" model="ir.ui.menu">
-        <field name="sequence">8</field>
+        <field name="name">Flota - Km actuales por vehículo</field>
+        <field name="sequence">5</field>
     </record>
 </odoo>

@@ -1,12 +1,13 @@
 {
     "name": "Socger Expand Fleet",
     "summary": "Gestión que expandela flota de vehículos",
-    "version": "18.0.0.15.0",
+    "version": "18.0.0.18.0",
     "category": "Human Resources/Fleet",
     "website": "https://cuidamet.duckdns.org/",
     "author": "SocGer",
     "license": "LGPL-3",
     "depends": ["fleet"],
+    "post_init_hook": "post_init_hook",
     "data": [
         "security/ir.model.access.csv",
         "views/vehicle_type_views.xml",
