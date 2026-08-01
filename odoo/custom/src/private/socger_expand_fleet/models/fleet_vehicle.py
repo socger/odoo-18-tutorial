@@ -23,6 +23,22 @@ class FleetVehicle(models.Model):
         inverse_name="fleet_vehicle_id",
         string="Concept Cost Budget Sale By Vehicle",
     )
+    odometer_date = fields.Date(
+        string="Km actualizados el",
+        compute="_compute_odometer_date",
+    )
+
+    @api.depends()
+    def _compute_odometer_date(self):
+        """Return the date of the odometer log holding the current odometer value."""
+        Odometer = self.env["fleet.vehicle.odometer"]
+        for record in self:
+            odometer_log = Odometer.search(
+                [("vehicle_id", "=", record.id)],
+                limit=1,
+                order="value desc",
+            )
+            record.odometer_date = odometer_log.date if odometer_log else False
 
     _sql_constraints = [
         (
