@@ -58,9 +58,14 @@ crearlos):
   EN PROMPT
 
 - Ctas y proyecto contable
+
   - Ventas km.nacional ... YA EN PROMPT
   - Ventas km. internacional ... YA EN PROMPT
   - Proyecto contable ... YA EN PROMPT
+
+- Km. actuales
+  - Km. ... YA EN PROMPT
+  - Actualizados el ... YA EN PROMPT
 
 =======================================================
 
@@ -68,19 +73,9 @@ Se necesitan modelos nuevos para controlar lo de abajo
 
 =======================================================
 
-- Km. actuales
-
-  - Km.
-  - Actualizados el
-
 - Empresa
 
   - Empresa a la que pertenece
   - Cochera ... EXISTE ya un campo llamado Ubicación (field location) ... pero no es una
     tabla
   - Empresa colaboradora / agregada
-
-- RFID (Identificación del vehículo al entrar en cocheras)
-
-- Tarjeta de transporte
-  - Ambito
