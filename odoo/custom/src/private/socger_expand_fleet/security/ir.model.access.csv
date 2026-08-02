@@ -17,3 +17,5 @@ access_concept_cost_budget_sale_by_vehicle_user,concept.cost.budget.sale.by.vehi
 access_concept_cost_budget_sale_by_vehicle_manager,concept.cost.budget.sale.by.vehicle.manager,model_concept_cost_budget_sale_by_vehicle,fleet.fleet_group_manager,1,1,1,1
 access_fleet_vehicle_document_category_user,fleet.vehicle.document.category.user,model_fleet_vehicle_document_category,fleet.fleet_group_user,1,0,0,0
 access_fleet_vehicle_document_category_manager,fleet.vehicle.document.category.manager,model_fleet_vehicle_document_category,fleet.fleet_group_manager,1,1,1,1
+access_fleet_garage_user,fleet.garage.user,model_fleet_garage,fleet.fleet_group_user,1,0,0,0
+access_fleet_garage_manager,fleet.garage.manager,model_fleet_garage,fleet.fleet_group_manager,1,1,1,1

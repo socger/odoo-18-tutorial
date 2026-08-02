@@ -37,6 +37,7 @@
         "views/report_vehicle_feature_basic_templates.xml",
         "views/report_vehicle_feature_by_vehicle_templates.xml",
         "views/report_vehicle_feature_by_vehicle_basic_templates.xml",
+        "views/fleet_garage_views.xml",
         "views/menu.xml",
     ],
     "assets": {

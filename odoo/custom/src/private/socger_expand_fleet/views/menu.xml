@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <odoo>
+    <!-- Submenu under "Configuración" (fleet.fleet_configuration), placed
+         before "Modelos" (fleet.fleet_models_configuration, sequence 10).
+         Opens the list view of the fleet.garage model. -->
+    <menuitem
+        id="menu_fleet_garage"
+        name="Cocheras"
+        parent="fleet.fleet_configuration"
+        action="action_fleet_garage"
+        sequence="5"
+        groups="fleet.fleet_group_manager"
+    />
+
     <menuitem
         id="menu_fleet_vehicle_type"
         name="Tipos de vehículo"
