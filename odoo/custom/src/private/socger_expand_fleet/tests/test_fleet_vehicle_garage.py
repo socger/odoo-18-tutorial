@@ -19,13 +19,27 @@ class TestFleetVehicleGarage(TransactionCase):
 
     def test_create_vehicle_with_garage(self):
         vehicle = self.env["fleet.vehicle"].create(
-            {"model_id": self.model.id, "fleet_garage_id": self.garage.id}
+            {
+                "model_id": self.model.id,
+                "fleet_garage_id": self.garage.id,
+                "vehicle_code": "VHC-GARAGE",
+                "seating_capacity_per_permit": 4,
+                "seating_capacity_per_technical_datasheet": "4",
+                "seating_capacity_bookable_seats": 4,
+            }
         )
         self.assertEqual(vehicle.fleet_garage_id, self.garage)
 
     def test_garage_display_name_is_name(self):
         vehicle = self.env["fleet.vehicle"].create(
-            {"model_id": self.model.id, "fleet_garage_id": self.garage.id}
+            {
+                "model_id": self.model.id,
+                "fleet_garage_id": self.garage.id,
+                "vehicle_code": "VHC-GARAGE-2",
+                "seating_capacity_per_permit": 4,
+                "seating_capacity_per_technical_datasheet": "4",
+                "seating_capacity_bookable_seats": 4,
+            }
         )
         self.assertEqual(vehicle.fleet_garage_id.display_name, "Cochera Central")
 

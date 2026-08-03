@@ -62,3 +62,101 @@ class TestFleetVehicleViews(TransactionCase):
         self.assertNotIn("license_plate", activity_fields)
         template_fields = root.xpath("//div[@t-name='activity-box']//field/@name")
         self.assertIn("license_plate_with_code", template_fields)
+
+    def test_form_engine_and_bodywork_after_color(self):
+        root = self._combined_arch(
+            "socger_expand_fleet.view_fleet_vehicle_form_inherit"
+        )
+        seq = self._field_sequence(root)
+        self.assertLess(seq.index("color"), seq.index("engine_Chassis"))
+        self.assertLess(seq.index("engine_Chassis"), seq.index("bodywork"))
+        self.assertLess(seq.index("bodywork"), seq.index("build_Number"))
+
+    def test_form_seats_replaced_by_seating_capacity(self):
+        root = self._combined_arch(
+            "socger_expand_fleet.view_fleet_vehicle_form_inherit"
+        )
+        seq = self._field_sequence(root)
+        self.assertNotIn("seats", seq)
+        self.assertLess(
+            seq.index("build_Number"), seq.index("seating_capacity_per_permit")
+        )
+        self.assertLess(
+            seq.index("seating_capacity_per_permit"),
+            seq.index("seating_capacity_per_technical_datasheet"),
+        )
+        self.assertLess(
+            seq.index("seating_capacity_per_technical_datasheet"),
+            seq.index("seating_capacity_bookable_seats"),
+        )
+        self.assertLess(
+            seq.index("seating_capacity_bookable_seats"), seq.index("doors")
+        )
+
+    def test_form_model_id_before_category_id(self):
+        root = self._combined_arch(
+            "socger_expand_fleet.view_fleet_vehicle_form_inherit"
+        )
+        seq = self._field_sequence(root)
+        self.assertLess(seq.index("model_id"), seq.index("category_id"))
+
+    def test_form_vehicle_type_and_booleans_before_order_date(self):
+        root = self._combined_arch(
+            "socger_expand_fleet.view_fleet_vehicle_form_inherit"
+        )
+        seq = self._field_sequence(root)
+        self.assertLess(seq.index("vehicle_type_id"), seq.index("order_date"))
+        self.assertLess(seq.index("vehicle_type_id"), seq.index("digital_tachograph"))
+        self.assertLess(
+            seq.index("digital_tachograph"),
+            seq.index("professional_diesel_tax_relief_beneficiary"),
+        )
+        self.assertLess(
+            seq.index("professional_diesel_tax_relief_beneficiary"),
+            seq.index("order_date"),
+        )
+
+    def test_form_mileage_and_age_positions(self):
+        root = self._combined_arch(
+            "socger_expand_fleet.view_fleet_vehicle_form_inherit"
+        )
+        seq = self._field_sequence(root)
+        self.assertLess(seq.index("vin_sn"), seq.index("mileage_at_purchase"))
+        self.assertLess(seq.index("mileage_at_purchase"), seq.index("odometer"))
+        self.assertLess(seq.index("write_off_date"), seq.index("vehicle_age"))
+
+    def test_form_tag_ids_below_vehicle_code(self):
+        root = self._combined_arch(
+            "socger_expand_fleet.view_fleet_vehicle_form_inherit"
+        )
+        seq = self._field_sequence(root)
+        self.assertLess(seq.index("vehicle_code"), seq.index("tag_ids"))
+
+    def test_form_features_page_two_groups(self):
+        root = self._combined_arch(
+            "socger_expand_fleet.view_fleet_vehicle_form_inherit"
+        )
+        page = root.xpath("//page[@name='vehicle_features']")[0]
+        inner_groups = page.xpath("./group/group")
+        self.assertEqual(len(inner_groups), 2)
+        self.assertTrue(
+            inner_groups[0].xpath(".//field[@name='vehicle_feature_by_vehicle_ids']")
+        )
+        self.assertTrue(
+            inner_groups[1].xpath(".//field[@name='special_configurations']")
+        )
+
+    def test_form_accounting_page_between_concepts_and_note(self):
+        root = self._combined_arch(
+            "socger_expand_fleet.view_fleet_vehicle_form_inherit"
+        )
+        page_names = [page.get("name") for page in root.xpath("//page")]
+        self.assertLess(page_names.index("concepts"), page_names.index("accounting"))
+        self.assertLess(page_names.index("accounting"), page_names.index("note"))
+        accounting = root.xpath("//page[@name='accounting']")[0]
+        accounting_fields = [
+            field.get("name") for field in accounting.xpath(".//field")
+        ]
+        self.assertIn("accounting_national_mileage", accounting_fields)
+        self.assertIn("accounting_international_mileage", accounting_fields)
+        self.assertIn("accounting_accounting_project", accounting_fields)

@@ -1,3 +1,4 @@
+from dateutil.relativedelta import relativedelta
 from psycopg2 import IntegrityError
 
 from odoo import _, api, fields, models
@@ -56,6 +57,72 @@ class FleetVehicle(models.Model):
         compute="_compute_license_plate_with_code",
         store=True,
     )
+    # === Vehicle identification details === #
+    engine_Chassis = fields.Char(
+        string="Motor/chasis",
+        tracking=True,
+    )
+    bodywork = fields.Char(
+        string="Carrocería",
+        tracking=True,
+    )
+    build_Number = fields.Char(
+        string="Nº. de obra",
+        tracking=True,
+    )
+    mileage_at_purchase = fields.Float(
+        string="Km cuando se compró",
+        tracking=True,
+    )
+    seating_capacity_per_permit = fields.Integer(
+        string="Plazas - según permiso",
+        required=True,
+        tracking=True,
+    )
+    seating_capacity_per_technical_datasheet = fields.Char(
+        string="Plazas - según ficha técnica",
+        required=True,
+        tracking=True,
+    )
+    seating_capacity_bookable_seats = fields.Integer(
+        string="Plazas - Ofertables",
+        required=True,
+        tracking=True,
+    )
+    special_configurations = fields.Html(
+        string="Configuraciones especiales",
+        tracking=True,
+    )
+    vehicle_age = fields.Integer(
+        string="Edad del vehículo",
+        compute="_compute_vehicle_age",
+    )
+    driver_id = fields.Many2one(
+        comodel_name="res.partner",
+        string="Conductor habitual",
+    )
+    digital_tachograph = fields.Boolean(
+        string="Tacógrafo digital",
+        default=True,
+        tracking=True,
+    )
+    professional_diesel_tax_relief_beneficiary = fields.Boolean(
+        string="Beneficiario gasoleo profesional",
+        default=True,
+        tracking=True,
+    )
+    accounting_national_mileage = fields.Char(
+        string="Contabilidad - km nacional",
+        tracking=True,
+    )
+    accounting_international_mileage = fields.Char(
+        string="Contabilidad - km internacional",
+        tracking=True,
+    )
+    accounting_accounting_project = fields.Char(
+        string="Contabilidad - proyecto contable",
+        tracking=True,
+    )
 
     @api.depends("license_plate", "vehicle_code")
     def _compute_license_plate_with_code(self):
@@ -77,6 +144,20 @@ class FleetVehicle(models.Model):
                 order="value desc",
             )
             record.odometer_date = odometer_log.date if odometer_log else False
+
+    @api.depends("acquisition_date", "write_off_date")
+    def _compute_vehicle_age(self):
+        """Age of the vehicle in years, measured at the write-off date when set,
+        otherwise at today's date."""
+        today = fields.Date.context_today(self)
+        for record in self:
+            end_date = record.write_off_date or today
+            if record.acquisition_date and end_date >= record.acquisition_date:
+                record.vehicle_age = relativedelta(
+                    end_date, record.acquisition_date
+                ).years
+            else:
+                record.vehicle_age = 0
 
     _sql_constraints = [
         (

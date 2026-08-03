@@ -37,25 +37,89 @@
                 <field name="res_partner_id" />
             </xpath>
 
-            <!-- FASE 4: add vehicle_type_id (readonly) before model_year -->
+            <!-- FASE 1: move model_id out of the title and keep it before category_id -->
             <xpath
-                expr="//page[@name='page_model']//field[@name='model_year']"
-                position="before"
-            >
-                <field name="vehicle_type_id" readonly="1" />
+                expr="//div[contains(@class, 'oe_title')]/label[@for='model_id']"
+                position="replace"
+            />
+            <xpath
+                expr="//div[contains(@class, 'oe_title')]/h1[./field[@name='model_id']]"
+                position="replace"
+            />
+            <xpath expr="//field[@name='category_id']" position="before">
+                <field name="model_id" />
             </xpath>
 
-            <!-- FASE 4: add features tab before Note page -->
+            <!-- FASE 1: keep tag_ids below vehicle_code -->
+            <xpath expr="//label[@for='tag_ids']" position="replace" />
+            <xpath expr="//field[@name='tag_ids']" position="replace" />
+            <xpath expr="//field[@name='vehicle_code']" position="after">
+                <label for="tag_ids" class="me-3" />
+                <field
+                    name="tag_ids"
+                    widget="many2many_tags"
+                    options="{'color_field': 'color', 'no_create_edit': True}"
+                />
+            </xpath>
+
+            <!-- FASE 1: vehicle_type_id before order_date, then digital tachograph
+                 and professional diesel below it -->
+            <xpath expr="//field[@name='order_date']" position="before">
+                <field name="vehicle_type_id" />
+            </xpath>
+            <xpath expr="//field[@name='vehicle_type_id']" position="after">
+                <field name="digital_tachograph" invisible="vehicle_type != 'car'" />
+            </xpath>
+            <xpath expr="//field[@name='digital_tachograph']" position="after">
+                <field
+                    name="professional_diesel_tax_relief_beneficiary"
+                    invisible="vehicle_type != 'car'"
+                />
+            </xpath>
+
+            <!-- FASE 1: mileage at purchase after vin_sn, before the odometer -->
+            <xpath expr="//field[@name='vin_sn']" position="after">
+                <field name="mileage_at_purchase" invisible="vehicle_type != 'car'" />
+            </xpath>
+
+            <!-- FASE 1: vehicle age right after the write-off date -->
+            <xpath expr="//field[@name='write_off_date']" position="after">
+                <field name="vehicle_age" invisible="vehicle_type != 'car'" />
+            </xpath>
+
+            <!-- FASE 1: model page - engine/bodywork details before seats (after color) -->
+            <xpath expr="//field[@name='seats']" position="before">
+                <field name="engine_Chassis" invisible="vehicle_type != 'car'" />
+                <field name="bodywork" invisible="vehicle_type != 'car'" />
+                <field name="build_Number" invisible="vehicle_type != 'car'" />
+            </xpath>
+
+            <!-- FASE 1: replace seats with the seating capacity fields -->
+            <xpath expr="//field[@name='seats']" position="replace">
+                <field name="seating_capacity_per_permit" />
+                <field name="seating_capacity_per_technical_datasheet" />
+                <field name="seating_capacity_bookable_seats" />
+            </xpath>
+
+            <!-- FASE 1: split the vehicle features page into two side-by-side groups
+                 and add the accounting page before Note -->
             <xpath expr="//page[@name='note']" position="before">
                 <page
                     string="Características/equipamiento de vehículos"
                     name="vehicle_features"
                 >
-                    <field name="vehicle_feature_by_vehicle_ids">
-                        <list>
-                            <field name="vehicle_feature_id" />
-                        </list>
-                    </field>
+                    <group col="2">
+                        <group string="Características/equipamiento">
+                            <field name="vehicle_feature_by_vehicle_ids">
+                                <list>
+                                    <field name="vehicle_feature_id" />
+                                </list>
+                            </field>
+                        </group>
+                        <group string="Configuraciones especiales">
+                            <field name="special_configurations" />
+                        </group>
+                    </group>
                 </page>
                 <page
                     string="Conceptos de control de costes, presupuestos ó ventas"
@@ -67,6 +131,13 @@
                             <field name="value" />
                         </list>
                     </field>
+                </page>
+                <page string="Contabilidad" name="accounting">
+                    <group>
+                        <field name="accounting_national_mileage" />
+                        <field name="accounting_international_mileage" />
+                        <field name="accounting_accounting_project" />
+                    </group>
                 </page>
             </xpath>
         </field>

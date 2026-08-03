@@ -11,12 +11,26 @@ class TestAttachmentFleetDocument(TransactionCase):
         self.category = self.env["fleet.vehicle.document.category"].create(
             {"name": "ITV"}
         )
+        self.garage = self.env["fleet.garage"].create(
+            {
+                "name": "Cochera Docs",
+                "res_company_id": self.env.ref("base.main_company").id,
+            }
+        )
         brand = self.env["fleet.vehicle.model.brand"].create({"name": "TestBrand"})
         model = self.env["fleet.vehicle.model"].create(
             {"brand_id": brand.id, "name": "TestModel"}
         )
         self.vehicle = self.env["fleet.vehicle"].create(
-            {"model_id": model.id, "plan_to_change_car": False}
+            {
+                "model_id": model.id,
+                "plan_to_change_car": False,
+                "fleet_garage_id": self.garage.id,
+                "vehicle_code": "VHC-DOC-1",
+                "seating_capacity_per_permit": 4,
+                "seating_capacity_per_technical_datasheet": "4",
+                "seating_capacity_bookable_seats": 4,
+            }
         )
 
     def _create_attachment(self, name, **overrides):
@@ -37,7 +51,15 @@ class TestAttachmentFleetDocument(TransactionCase):
             {"brand_id": brand.id, "name": "TestModel2"}
         )
         return self.env["fleet.vehicle"].create(
-            {"model_id": model.id, "plan_to_change_car": False}
+            {
+                "model_id": model.id,
+                "plan_to_change_car": False,
+                "fleet_garage_id": self.garage.id,
+                "vehicle_code": "VHC-DOC-2",
+                "seating_capacity_per_permit": 4,
+                "seating_capacity_per_technical_datasheet": "4",
+                "seating_capacity_bookable_seats": 4,
+            }
         )
 
     def test_create_attachment_with_category(self):

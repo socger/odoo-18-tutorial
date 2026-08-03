@@ -20,7 +20,17 @@ class TestVehicleFeatureByVehicle(TransactionCase):
         model = cls.env["fleet.vehicle.model"].create(
             {"name": "TestModel", "brand_id": brand.id}
         )
-        cls.vehicle = cls.env["fleet.vehicle"].create({"model_id": model.id})
+        cls.garage = cls.env["fleet.garage"].create({"name": "Cochera Features"})
+        cls.vehicle = cls.env["fleet.vehicle"].create(
+            {
+                "model_id": model.id,
+                "fleet_garage_id": cls.garage.id,
+                "vehicle_code": "VHC-FEAT-1",
+                "seating_capacity_per_permit": 4,
+                "seating_capacity_per_technical_datasheet": "4",
+                "seating_capacity_bookable_seats": 4,
+            }
+        )
 
     def test_create_feature_by_vehicle(self):
         record = self.env["vehicle.feature.by.vehicle"].create(
