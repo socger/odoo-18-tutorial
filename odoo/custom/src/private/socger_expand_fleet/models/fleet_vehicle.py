@@ -13,6 +13,13 @@ class FleetVehicle(models.Model):
         required=True,
         tracking=True,
     )
+    fleet_garage_id: int = fields.Many2one(
+        comodel_name="fleet.garage",
+        string="Cochera",
+        required=True,
+        tracking=True,
+        ondelete="restrict",
+    )
     vehicle_feature_by_vehicle_ids = fields.One2many(
         comodel_name="vehicle.feature.by.vehicle",
         inverse_name="fleet_vehicle_id",

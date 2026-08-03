@@ -4,7 +4,13 @@
         <field name="name">fleet.vehicle.form.inherit</field>
         <field name="model">fleet.vehicle</field>
         <field name="inherit_id" ref="fleet.fleet_vehicle_view_form" />
+        <field name="priority" eval="99" />
         <field name="arch" type="xml">
+            <!-- FASE 1: replace location char field with fleet_garage_id (Cochera) -->
+            <xpath expr="//field[@name='location']" position="replace">
+                <field name="fleet_garage_id" />
+            </xpath>
+
             <!-- Relabel odometer field as "Km actuales" -->
             <xpath expr="//label[@for='odometer']" position="attributes">
                 <attribute name="string">Km actuales</attribute>
@@ -46,6 +52,24 @@
                         </list>
                     </field>
                 </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- FASE 1: replace location with fleet_garage_id (Cochera) in kanban card -->
+    <record id="view_fleet_vehicle_kanban_inherit" model="ir.ui.view">
+        <field name="name">fleet.vehicle.kanban.inherit</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_kanban" />
+        <field name="priority" eval="99" />
+        <field name="arch" type="xml">
+            <xpath expr="//t[@t-if='record.location.raw_value']" position="replace">
+                <t t-if="record.fleet_garage_id.raw_value">
+                    <small>
+                        <i class="fa fa-map-marker" title="Cochera" />
+                        <field name="fleet_garage_id" />
+                    </small>
+                </t>
             </xpath>
         </field>
     </record>

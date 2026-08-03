@@ -15,6 +15,7 @@ class FleetGarage(models.Model):
     _description = "Fleet Garage"
     _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "name"
+    _rec_name = "name"
 
     res_company_id: int = fields.Many2one(
         comodel_name="res.company",
