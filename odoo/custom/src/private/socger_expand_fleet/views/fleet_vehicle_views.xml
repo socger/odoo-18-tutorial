@@ -21,6 +21,12 @@
                 <field name="odometer_date" invisible="vehicle_type != 'car'" />
             </xpath>
 
+            <!-- FASE 1: add company and partner below odometer_date, before manager_id -->
+            <xpath expr="//field[@name='odometer_date']" position="after">
+                <field name="res_company_id" />
+                <field name="res_partner_id" />
+            </xpath>
+
             <!-- FASE 4: add vehicle_type_id (readonly) before model_year -->
             <xpath
                 expr="//page[@name='page_model']//field[@name='model_year']"
@@ -70,6 +76,74 @@
                         <field name="fleet_garage_id" />
                     </small>
                 </t>
+            </xpath>
+
+            <!-- FASE 1: show company or partner below the license plate -->
+            <xpath expr="//div[./field[@name='model_id']]" position="after">
+                <div class="small">
+                    <t t-if="record.res_company_id.raw_value">
+                        <i class="fa fa-building" title="Empresa" />
+                        <field name="res_company_id" />
+                    </t>
+                    <t t-if="record.res_partner_id.raw_value">
+                        <i class="fa fa-handshake-o" title="Empresa colaboradora" />
+                        <field name="res_partner_id" />
+                    </t>
+                </div>
+            </xpath>
+
+            <!-- FASE 1: show vehicle code between tags and driver -->
+            <xpath expr="//field[@name='tag_ids']" position="after">
+                <field name="vehicle_code" />
+            </xpath>
+        </field>
+    </record>
+
+    <!-- FASE 1: add vehicle_code column at the beginning of the list -->
+    <record id="view_fleet_vehicle_list_inherit" model="ir.ui.view">
+        <field name="name">fleet.vehicle.list.inherit</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_tree" />
+        <field name="priority" eval="99" />
+        <field name="arch" type="xml">
+            <xpath expr="//list/field[@name='license_plate']" position="before">
+                <field name="vehicle_code" />
+            </xpath>
+        </field>
+    </record>
+
+    <!-- FASE 1: show license plate + vehicle code combined in the pivot -->
+    <record id="view_fleet_vehicle_pivot_inherit" model="ir.ui.view">
+        <field name="name">fleet.vehicle.pivot.inherit</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_pivot" />
+        <field name="priority" eval="99" />
+        <field name="arch" type="xml">
+            <xpath expr="//pivot/field[@name='license_plate']" position="replace">
+                <field name="license_plate_with_code" type="row" />
+            </xpath>
+        </field>
+    </record>
+
+    <!-- FASE 1: show license plate + vehicle code combined in the activity -->
+    <record id="view_fleet_vehicle_activity_inherit" model="ir.ui.view">
+        <field name="name">fleet.vehicle.activity.inherit</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_activity" />
+        <field name="priority" eval="99" />
+        <field name="arch" type="xml">
+            <xpath expr="//activity/field[@name='license_plate']" position="attributes">
+                <attribute name="name">license_plate_with_code</attribute>
+            </xpath>
+            <xpath
+                expr="//div[@t-name='activity-box']//field[@name='license_plate']"
+                position="replace"
+            >
+                <field
+                    name="license_plate_with_code"
+                    display="full"
+                    class="o_text_block"
+                />
             </xpath>
         </field>
     </record>

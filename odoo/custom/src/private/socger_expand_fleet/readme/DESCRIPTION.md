@@ -14,5 +14,12 @@ gestión de flota:
 - `vehicle.feature.by.vehicle`: asignación de características a vehículos de la flota
   (una misma característica no se puede asignar dos veces al mismo vehículo).
 
+Además, el modelo `fleet.vehicle` se amplía con:
+
+- `vehicle_code`: código único de vehículo (obligatorio).
+- `res_company_id` / `res_partner_id`: empresa o empresa colaboradora asociada al
+  vehículo (solo una de las dos puede tener valor).
+- `license_plate_with_code`: matrícula y código combinados para vistas analíticas.
+
 Los modelos incluyen índices únicos para evitar duplicados y validaciones de negocio
 para garantizar la integridad de los datos.

@@ -1,7 +1,7 @@
 from psycopg2 import IntegrityError
 
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class FleetVehicle(models.Model):
@@ -34,6 +34,37 @@ class FleetVehicle(models.Model):
         string="Km actualizados el",
         compute="_compute_odometer_date",
     )
+    vehicle_code = fields.Char(
+        string="Código de vehículo",
+        required=True,
+        tracking=True,
+    )
+    res_company_id = fields.Many2one(
+        comodel_name="res.company",
+        string="Empresa",
+        required=False,
+        tracking=True,
+    )
+    res_partner_id = fields.Many2one(
+        comodel_name="res.partner",
+        string="Empresa colaboradora",
+        required=False,
+        tracking=True,
+    )
+    license_plate_with_code = fields.Char(
+        string="Matrícula / Código",
+        compute="_compute_license_plate_with_code",
+        store=True,
+    )
+
+    @api.depends("license_plate", "vehicle_code")
+    def _compute_license_plate_with_code(self):
+        """Concatenate license plate and vehicle code for pivot/activity views."""
+        for record in self:
+            parts = [
+                part for part in (record.license_plate, record.vehicle_code) if part
+            ]
+            record.license_plate_with_code = " / ".join(parts)
 
     @api.depends()
     def _compute_odometer_date(self):
@@ -58,7 +89,34 @@ class FleetVehicle(models.Model):
             "UNIQUE(vehicle_type_id, license_plate)",
             "A vehicle with this type and license plate already exists.",
         ),
+        (
+            "vehicle_code_unique",
+            "UNIQUE(vehicle_code)",
+            "A vehicle with this vehicle code already exists.",
+        ),
+        (
+            "res_company_vehicle_code_unique",
+            "UNIQUE(res_company_id, vehicle_code)",
+            "A vehicle with this vehicle code already exists for this company.",
+        ),
+        (
+            "res_partner_vehicle_code_unique",
+            "UNIQUE(res_partner_id, vehicle_code)",
+            "A vehicle with this vehicle code already exists for this partner.",
+        ),
     ]
+
+    @api.constrains("res_company_id", "res_partner_id")
+    def _check_company_partner_exclusive(self):
+        """A vehicle cannot have both a company and a partner assigned."""
+        for record in self:
+            if record.res_company_id and record.res_partner_id:
+                raise ValidationError(
+                    _(
+                        "A vehicle cannot be assigned to both a company "
+                        "and a partner. Please choose only one of them."
+                    )
+                )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -77,6 +135,24 @@ class FleetVehicle(models.Model):
                 raise UserError(
                     _("A vehicle with this type and license plate " "already exists.")
                 ) from e
+            if "vehicle_code_unique" in str(e):
+                raise UserError(
+                    _("A vehicle with this vehicle code already exists.")
+                ) from e
+            if "res_company_vehicle_code_unique" in str(e):
+                raise UserError(
+                    _(
+                        "A vehicle with this vehicle code already exists "
+                        "for this company."
+                    )
+                ) from e
+            if "res_partner_vehicle_code_unique" in str(e):
+                raise UserError(
+                    _(
+                        "A vehicle with this vehicle code already exists "
+                        "for this partner."
+                    )
+                ) from e
             raise
         for vehicle in vehicles:
             vehicle._create_concept_records()
@@ -88,6 +164,11 @@ class FleetVehicle(models.Model):
             vals["vehicle_type_id"] = model.vehicle_type_id.id
         try:
             result = super().write(vals)
+            # Write is lazy since Odoo 16: the SQL UPDATE only happens at the
+            # next flush. Force it here so a unique-constraint violation is
+            # caught and reported as a friendly UserError instead of a raw DB
+            # error surfacing later in the transaction.
+            self.flush_model()
         except IntegrityError as e:
             if "model_license_plate_unique" in str(e):
                 raise UserError(
@@ -96,6 +177,24 @@ class FleetVehicle(models.Model):
             if "vehicle_type_license_plate_unique" in str(e):
                 raise UserError(
                     _("A vehicle with this type and license plate " "already exists.")
+                ) from e
+            if "vehicle_code_unique" in str(e):
+                raise UserError(
+                    _("A vehicle with this vehicle code already exists.")
+                ) from e
+            if "res_company_vehicle_code_unique" in str(e):
+                raise UserError(
+                    _(
+                        "A vehicle with this vehicle code already exists "
+                        "for this company."
+                    )
+                ) from e
+            if "res_partner_vehicle_code_unique" in str(e):
+                raise UserError(
+                    _(
+                        "A vehicle with this vehicle code already exists "
+                        "for this partner."
+                    )
                 ) from e
             raise
         if "vehicle_type_id" in vals:
