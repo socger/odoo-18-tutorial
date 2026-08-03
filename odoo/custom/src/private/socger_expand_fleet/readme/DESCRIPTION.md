@@ -23,3 +23,11 @@ Además, el modelo `fleet.vehicle` se amplía con:
 
 Los modelos incluyen índices únicos para evitar duplicados y validaciones de negocio
 para garantizar la integridad de los datos.
+
+En las vistas de `fleet.vehicle`:
+
+- Form: `vehicle_code` entre `license_plate` y `tag_ids`.
+- Kanban: empresa/empresa colaboradora bajo la matrícula y `vehicle_code` entre
+  `tag_ids` y `driver_id`.
+- Pivot y actividad: `license_plate_with_code` (matrícula + " / " + código) en lugar de
+  `license_plate`.

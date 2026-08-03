@@ -21,6 +21,16 @@
                 <field name="odometer_date" invisible="vehicle_type != 'car'" />
             </xpath>
 
+            <!-- FASE 1: show vehicle code between the license plate and the tags -->
+            <xpath expr="//h2[./field[@name='license_plate']]" position="after">
+                <label for="vehicle_code" />
+                <field
+                    name="vehicle_code"
+                    class="oe_inline"
+                    placeholder="e.g. VHC-001"
+                />
+            </xpath>
+
             <!-- FASE 1: add company and partner below odometer_date, before manager_id -->
             <xpath expr="//field[@name='odometer_date']" position="after">
                 <field name="res_company_id" />
@@ -80,7 +90,10 @@
 
             <!-- FASE 1: show company or partner below the license plate -->
             <xpath expr="//div[./field[@name='model_id']]" position="after">
-                <div class="small">
+                <div
+                    class="small"
+                    t-if="record.res_company_id.raw_value or record.res_partner_id.raw_value"
+                >
                     <t t-if="record.res_company_id.raw_value">
                         <i class="fa fa-building" title="Empresa" />
                         <field name="res_company_id" />
@@ -94,7 +107,12 @@
 
             <!-- FASE 1: show vehicle code between tags and driver -->
             <xpath expr="//field[@name='tag_ids']" position="after">
-                <field name="vehicle_code" />
+                <t t-if="record.vehicle_code.raw_value">
+                    <small>
+                        <i class="fa fa-hashtag" title="Código de vehículo" />
+                        <field name="vehicle_code" />
+                    </small>
+                </t>
             </xpath>
         </field>
     </record>

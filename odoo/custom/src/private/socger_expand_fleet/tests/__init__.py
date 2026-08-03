@@ -10,3 +10,4 @@ from . import test_attachment_fleet_document
 from . import test_fleet_garage
 from . import test_fleet_vehicle_garage
 from . import test_fleet_vehicle
+from . import test_fleet_vehicle_views
