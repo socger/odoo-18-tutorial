@@ -29,6 +29,8 @@ crearlos):
 - Matriculación
   - 1ª matriculación (fecha) ... YA EXISTIA EN MODULO
 - Conductor habitual ... YA EXISTIA EN MODULO
+- Cochera ... EXISTE ya un campo llamado Ubicación (field location) ... pero no es una
+  tabla ... al final creé una tabla (fleet_garage)
 
 =================================================
 
@@ -74,8 +76,5 @@ Se necesitan modelos nuevos para controlar lo de abajo
 =======================================================
 
 - Empresa
-
   - Empresa a la que pertenece
-  - Cochera ... EXISTE ya un campo llamado Ubicación (field location) ... pero no es una
-    tabla
   - Empresa colaboradora / agregada
